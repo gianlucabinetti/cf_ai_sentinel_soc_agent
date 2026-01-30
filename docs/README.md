@@ -23,12 +23,12 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
 
 ## Features
 
-✅ **Edge-Native AI Inference** – Runs Meta Llama 3.3-70b directly on Cloudflare Workers AI  
-✅ **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
-✅ **Durable Workflows** – Automatic retries and state management for long-running analysis  
-✅ **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
-✅ **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
-✅ **Zero Infrastructure** – No servers, databases, or containers to manage
+ **Edge-Native AI Inference** – Runs Meta Llama 3.3-70b directly on Cloudflare Workers AI  
+ **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
+ **Durable Workflows** – Automatic retries and state management for long-running analysis  
+ **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
+ **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
+ **Zero Infrastructure** – No servers, databases, or containers to manage
 
 ## Demo
 
@@ -222,15 +222,15 @@ npm test
 ```
 
 **What's tested:**
-- ✅ Type guards and input validation
-- ✅ SHA-256 hash determinism (idempotency)
-- ✅ Workflow ID generation consistency
-- ✅ SecurityAssessment validation edge cases
+-  Type guards and input validation
+-  SHA-256 hash determinism (idempotency)
+-  Workflow ID generation consistency
+-  SecurityAssessment validation edge cases
 
 **What's NOT tested:**
-- ❌ Workers AI inference (requires Cloudflare runtime)
-- ❌ KV operations (requires KV namespace)
-- ❌ Workflow execution (requires Workflows runtime)
+-  Workers AI inference (requires Cloudflare runtime)
+-  KV operations (requires KV namespace)
+-  Workflow execution (requires Workflows runtime)
 
 The tests focus on pure, deterministic functions that ensure type safety and correctness without external dependencies.
 
@@ -270,7 +270,7 @@ For threat model and security architecture, see [ARCHITECTURE.md](./ARCHITECTURE
 ## Documentation
 
 ### For Reviewers
-- **[ASSIGNMENT.md](./ASSIGNMENT.md)** – ⭐ **Start here!** Requirements checklist, quick-start guide, and design decisions
+- **[ASSIGNMENT.md](./ASSIGNMENT.md)** –  **Start here!** Requirements checklist, quick-start guide, and design decisions
 
 ### Technical Documentation
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** – Deep dive into system design, Cloudflare API usage, and implementation details (758 lines)
