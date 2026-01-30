@@ -138,4 +138,4 @@ See [ARCHITECTURE.md - Future Enhancements](./ARCHITECTURE.md#future-enhancement
 
 ---
 
-**Thank you for reviewing this submission!** For questions or clarifications, please see the documentation or contact [your-email@example.com].
+**Thank you for reviewing this submission!** For questions or clarifications, please see the documentation or contact [gbinetti2020@fau.edu].
