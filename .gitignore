@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Wrangler (Secrets lives here - NEVER commit)
+.wrangler/
+.dev.vars
+.env
+
+# Build outputs
+dist/
+.cache/
+worker/
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+deploy_error.txt
+deploy_output.txt
+deploy_log.txt
+kv_list.txt
+.nyc_output/
+
+# Temporary files
+*.tmp
+.temp/

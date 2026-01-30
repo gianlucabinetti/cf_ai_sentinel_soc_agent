@@ -1,0 +1,20 @@
+name = "sentinel-agent"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# [observability]
+# enabled = true
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "SENTINEL_KV"
+id = "9537df5b35e24bfd8fcd96b65c092ea4"
+
+# Workflows binding - temporarily disabled for initial deployment
+# [[workflows]]
+# name = "sentinel-workflow"
+# binding = "SENTINEL_WORKFLOW"
+# class_name = "SentinelWorkflow"
