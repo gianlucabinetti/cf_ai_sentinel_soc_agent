@@ -39,7 +39,6 @@ The Cloudflare Pages UI provides a terminal-inspired interface for security anal
 ![Sentinel UI Screenshot](./screenshot-ui.png)
 *Security analyst console with payload input, quick examples, and real-time AI analysis*
 
-> **Note:** To add screenshots, create a `docs/` folder and add `screenshot-ui.png` showing the Pages interface in action.
 
 ## Tech Stack
 
