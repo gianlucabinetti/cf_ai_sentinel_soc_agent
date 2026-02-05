@@ -33,7 +33,7 @@ function initDashboard() {
         <!-- LEFT COLUMN: Threat Analysis -->
         <div class="panel flex flex-col">
           <h2 class="text-xl font-semibold text-sentinel-accent mb-4 flex items-center gap-2">
-            <span>🔍</span>
+            <span></span>
             <span>Threat Analysis</span>
           </h2>
           
@@ -71,7 +71,7 @@ function initDashboard() {
         <!-- RIGHT COLUMN: System Monitoring -->
         <div class="panel flex flex-col">
           <h2 class="text-xl font-semibold text-sentinel-accent mb-4 flex items-center gap-2">
-            <span>🛡️</span>
+            <span></span>
             <span>System Monitoring</span>
           </h2>
           
@@ -153,7 +153,7 @@ async function loadMitigations() {
     console.error('Failed to load mitigations:', error);
     container.innerHTML = `
       <div class="text-center text-red-400 py-8">
-        <p class="text-sm">⚠️ Failed to load mitigations</p>
+        <p class="text-sm"> Failed to load mitigations</p>
         <p class="text-xs text-gray-500 mt-1">${error instanceof Error ? error.message : 'Unknown error'}</p>
       </div>
     `;
