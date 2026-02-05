@@ -26,6 +26,7 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
  **Edge-Native AI Inference** – Runs Meta Llama 3.3-70b directly on Cloudflare Workers AI  
  **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
  **Durable Workflows** – Automatic retries and state management for long-running analysis  
+ **Durable Alerting** – Automated SOC platform integration with risk-based alert triggering  
  **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
  **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
  **Zero Infrastructure** – No servers, databases, or containers to manage
@@ -184,7 +185,7 @@ This satisfies the **chat input** portion of the requirement. The textarea accep
 ## How It Works
 
 ```
-Client Request → Worker (hash + cache check) → Workflow (sanitize → AI → cache) → Response
+Client Request → Worker (hash + cache check) → Workflow (sanitize → AI → cache → alert) → Response
 ```
 
 1. **Request arrives** at the edge Worker
@@ -194,9 +195,169 @@ Client Request → Worker (hash + cache check) → Workflow (sanitize → AI →
    - Step 1: Sanitize payload (normalize, remove null bytes)
    - Step 2: AI inference (Llama 3.3-70b analyzes threat)
    - Step 3: Cache result in KV (72-hour TTL)
+   - Step 4: Trigger SOC alert (if risk score > 80 or action = "block")
 5. **Structured assessment** is returned with action recommendation
 
 For deep technical details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## SOC Alert Integration
+
+Sentinel includes **durable alerting** capabilities that automatically notify your Security Operations Center (SOC) when high-risk threats are detected. Alerts are triggered via Cloudflare Workflows, ensuring reliable delivery even if external systems are temporarily unavailable.
+
+### Risk-Based Alert Thresholds
+
+Alerts are automatically triggered when either condition is met:
+
+| Condition | Alert Triggered | Severity Level |
+|-----------|----------------|----------------|
+| `riskScore >= 90` | ✅ Yes | **Critical** |
+| `riskScore >= 80` | ✅ Yes | **High** |
+| `riskScore >= 70` AND `action = "block"` | ✅ Yes | **High** |
+| `action = "block"` (any score) | ✅ Yes | **High/Critical** |
+| `riskScore < 80` AND `action = "allow"` | ❌ No | N/A |
+| `action = "flag"` | ✅ Yes (if score > 80) | **Medium/High** |
+
+**Example Scenarios:**
+- **SQL Injection (riskScore: 95, action: "block")** → Critical alert sent to SOC
+- **XSS Attack (riskScore: 85, action: "block")** → High alert sent to SOC
+- **Suspicious Pattern (riskScore: 75, action: "flag")** → No alert (below threshold)
+- **Benign Traffic (riskScore: 10, action: "allow")** → No alert
+
+### Supported SOC Platforms
+
+Sentinel integrates with any webhook-compatible SOC platform:
+
+- **Microsoft Sentinel** – Azure Monitor Data Collection API
+- **Splunk HEC** – HTTP Event Collector
+- **PagerDuty** – Events API v2
+- **Custom Webhooks** – Any endpoint accepting POST with JSON payload
+
+### Alert Payload Structure
+
+When an alert is triggered, Sentinel sends a structured JSON payload:
+
+```json
+{
+  "alertId": "scan-abc123...",
+  "severity": "critical",
+  "source": "Sentinel AI Agent",
+  "timestamp": "2026-02-04T12:00:00Z",
+  "assessment": {
+    "attackType": "SQLi",
+    "confidence": "High",
+    "riskScore": 95,
+    "action": "block",
+    "explanation": "Boolean-based SQL injection detected...",
+    "impact": "Unauthorized database access...",
+    "mitigation": "Use parameterized queries..."
+  },
+  "metadata": {
+    "cacheKey": "abc123...",
+    "originalTimestamp": "2026-02-04T12:00:00Z"
+  }
+}
+```
+
+### Quick Setup Guide
+
+#### 1. Configure SOC Webhook URL
+
+Edit `wrangler.toml` and set your SOC platform's webhook endpoint:
+
+```toml
+[vars]
+SOC_WEBHOOK_URL = "https://your-soc-platform.com/api/webhooks/sentinel"
+```
+
+**Platform-Specific Examples:**
+
+**Microsoft Sentinel:**
+```toml
+SOC_WEBHOOK_URL = "https://your-workspace.ods.opinsights.azure.com/api/logs?api-version=2016-04-01"
+```
+
+**Splunk HEC:**
+```toml
+SOC_WEBHOOK_URL = "https://your-splunk-instance.com:8088/services/collector/event"
+```
+
+**PagerDuty:**
+```toml
+SOC_WEBHOOK_URL = "https://events.pagerduty.com/v2/enqueue"
+```
+
+#### 2. Configure Authentication (Production)
+
+For production deployments, use Wrangler secrets to securely store API keys:
+
+```bash
+# Set the API key as a secret (recommended for production)
+wrangler secret put SOC_API_KEY
+# Enter your API key when prompted
+```
+
+Then remove the `SOC_API_KEY` line from `wrangler.toml`.
+
+**For development/testing only:**
+```toml
+[vars]
+SOC_API_KEY = "your-test-api-key"
+```
+
+#### 3. Deploy and Test
+
+Deploy the updated configuration:
+```bash
+npm run deploy
+```
+
+Test with a high-risk payload:
+```bash
+curl -X POST https://your-worker.workers.dev/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"payload": "SELECT * FROM users WHERE id=1 OR 1=1"}'
+```
+
+Check your SOC platform for the incoming alert.
+
+### Disabling Alerts
+
+To disable SOC alerts, leave `SOC_WEBHOOK_URL` empty in `wrangler.toml`:
+
+```toml
+[vars]
+SOC_WEBHOOK_URL = ""
+```
+
+Sentinel will continue to analyze threats but won't send external alerts.
+
+### Monitoring Alert Delivery
+
+Check Cloudflare Workers logs for alert status:
+
+```bash
+wrangler tail
+```
+
+**Log Messages:**
+- `[Sentinel] SOC alert triggered for {cacheKey} (severity: critical)` – Alert sent successfully
+- `[Sentinel] No SOC alert needed for {cacheKey} (action: allow, risk: 45)` – Below threshold
+- `[Sentinel] SOC_WEBHOOK_URL not configured. Skipping alert` – Alerts disabled
+- `[Sentinel] Failed to trigger SOC alert: {error}` – Webhook failure (non-blocking)
+
+### Reliability & Error Handling
+
+**Durable Execution:**
+- SOC alerts are triggered as a separate workflow step
+- Automatic retries on transient failures (network errors, 5xx responses)
+- Non-blocking: Webhook failures don't prevent threat analysis
+
+**Graceful Degradation:**
+- If the SOC webhook is unavailable, the assessment is still cached and returned
+- Errors are logged for monitoring and debugging
+- The workflow continues even if alert delivery fails
+
+For advanced configuration and troubleshooting, see [SOC_INTEGRATION_SUMMARY.md](../SOC_INTEGRATION_SUMMARY.md).
 
 ## Project Structure
 
@@ -247,7 +408,15 @@ Your API will be live at `https://your-worker-name.workers.dev`
 Edit `wrangler.toml` to customize:
 - **AI model** (default: `@cf/meta/llama-3.3-70b-instruct`)
 - **Cache TTL** (default: 72 hours)
+- **SOC alerting** (webhook URL, API key, alert thresholds)
 - **Environment variables** (API keys, environment flags)
+
+**SOC Alert Configuration:**
+```toml
+[vars]
+SOC_WEBHOOK_URL = "https://your-soc-platform.com/webhooks/sentinel"
+SOC_API_KEY = ""  # Use 'wrangler secret put SOC_API_KEY' for production
+```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md#configuration) for advanced configuration.
 
