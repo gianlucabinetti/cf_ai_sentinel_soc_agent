@@ -19,6 +19,12 @@ id = "9537df5b35e24bfd8fcd96b65c092ea4"
 # binding = "SENTINEL_WORKFLOW"
 # class_name = "SentinelWorkflow"
 
+# --- Self-Healing Cleanup (Cron Trigger) ---
+# Automatically removes expired IP blocks from Cloudflare Firewall
+# Runs every 30 minutes to check for expired mitigation rules
+[triggers]
+crons = ["*/30 * * * *"]  # Every 30 minutes
+
 # --- SOC Integration Configuration ---
 # Configure these variables to enable SOC alert integration.
 # Alerts are triggered when action="block" OR riskScore > 80.

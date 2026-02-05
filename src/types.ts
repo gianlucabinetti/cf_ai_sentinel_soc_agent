@@ -46,6 +46,7 @@ export interface SecurityAssessment {
     riskScore: number;
     action: 'allow' | 'block' | 'flag';
     timestamp: string;
+    executive_summary: string; // Human-readable 1-2 sentence summary for Junior Security Analysts
 }
 
 // Type guard for SecurityAssessment validation
@@ -61,7 +62,8 @@ export function isSecurityAssessment(obj: unknown): obj is SecurityAssessment {
         typeof candidate.impact === 'string' &&
         typeof candidate.mitigation === 'string' &&
         typeof candidate.riskScore === 'number' &&
-        (candidate.action === 'allow' || candidate.action === 'block' || candidate.action === 'flag')
+        (candidate.action === 'allow' || candidate.action === 'block' || candidate.action === 'flag') &&
+        typeof candidate.executive_summary === 'string'
     );
 }
 

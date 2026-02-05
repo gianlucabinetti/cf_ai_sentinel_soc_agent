@@ -149,4 +149,84 @@ export default {
         // --- 404 Default ---
         return new Response("Not Found", { status: 404, headers: corsHeaders });
     },
+
+    /**
+     * Scheduled Handler (Cron Trigger)
+     * Self-Healing Cleanup: Automatically removes expired IP blocks from Cloudflare Firewall
+     */
+    async scheduled(
+        event: ScheduledEvent,
+        env: Env,
+        ctx: ExecutionContext
+    ): Promise<void> {
+        console.log(`[Sentinel Cleanup] Starting self-healing cleanup at ${new Date().toISOString()}`);
+
+        try {
+            // List all mitigation metadata keys from KV
+            const list = await env.SENTINEL_KV.list({ prefix: "mitigation:" });
+            
+            let cleanedCount = 0;
+            let errorCount = 0;
+
+            for (const key of list.keys) {
+                try {
+                    // Get mitigation metadata
+                    const metadataStr = await env.SENTINEL_KV.get(key.name);
+                    if (!metadataStr) {
+                        console.log(`[Sentinel Cleanup] No metadata found for ${key.name}, skipping`);
+                        continue;
+                    }
+
+                    const metadata = JSON.parse(metadataStr) as {
+                        ruleId: string;
+                        sourceIP: string;
+                        expiresAt: string;
+                    };
+
+                    // Check if rule has expired
+                    const expiresAt = new Date(metadata.expiresAt);
+                    const now = new Date();
+
+                    if (now >= expiresAt) {
+                        // Rule has expired - delete from Cloudflare Firewall
+                        if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID) {
+                            const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules/${metadata.ruleId}`;
+                            
+                            const response = await fetch(deleteUrl, {
+                                method: "DELETE",
+                                headers: {
+                                    "Authorization": `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+                                    "Content-Type": "application/json",
+                                },
+                            });
+
+                            if (response.ok) {
+                                console.log(`[Sentinel Cleanup] Deleted expired rule ${metadata.ruleId} for IP ${metadata.sourceIP}`);
+                                cleanedCount++;
+                            } else {
+                                const errorText = await response.text();
+                                console.error(`[Sentinel Cleanup] Failed to delete rule ${metadata.ruleId}: ${response.status} ${errorText}`);
+                                errorCount++;
+                            }
+                        } else {
+                            console.log(`[Sentinel Cleanup] Cloudflare API not configured, skipping rule deletion for ${metadata.sourceIP}`);
+                        }
+
+                        // Delete metadata from KV (cleanup even if API call failed)
+                        await env.SENTINEL_KV.delete(key.name);
+                    } else {
+                        const timeRemaining = Math.round((expiresAt.getTime() - now.getTime()) / 1000 / 60);
+                        console.log(`[Sentinel Cleanup] Rule ${metadata.ruleId} for IP ${metadata.sourceIP} expires in ${timeRemaining} minutes`);
+                    }
+                } catch (error) {
+                    console.error(`[Sentinel Cleanup] Error processing ${key.name}:`, error);
+                    errorCount++;
+                }
+            }
+
+            console.log(`[Sentinel Cleanup] Completed: ${cleanedCount} rules deleted, ${errorCount} errors, ${list.keys.length} total keys processed`);
+        } catch (error) {
+            console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
+        }
+    },
 };

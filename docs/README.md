@@ -5,9 +5,12 @@
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Workers AI](https://img.shields.io/badge/Workers%20AI-Llama%203.3--70b-F38020)](https://ai.cloudflare.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![OCSF Compliant](https://img.shields.io/badge/OCSF-1.0.0%20Compliant-4B8BBE?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==)](https://schema.ocsf.io/)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../LICENSE)
 
 Sentinel AI is a production-grade autonomous security operations center (SOC) built on Cloudflare Workers. It uses AI to automatically detect, analyze, alert, and mitigate security threats in real-time at the edge. Built entirely on Cloudflare's infrastructure, it delivers sub-millisecond responses for known threats and intelligent analysis for unknown payloads—without managing servers.
+
+**OCSF-Compliant Alerts**: All security findings are formatted using the Open Cybersecurity Schema Framework (OCSF) Detection Finding class, ensuring seamless integration with enterprise SIEM platforms like Splunk and Microsoft Sentinel.
 
 ## What It Does
 
@@ -24,8 +27,10 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
  **Edge-Native AI Inference** – Runs Meta Llama 3.3-70b directly on Cloudflare Workers AI  
  **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
  **Durable Workflows** – Automatic retries and state management for long-running analysis  
- **Durable Alerting** – Automated SOC platform integration with risk-based alert triggering  
+ **OCSF-Compliant Alerting** – SIEM-ready alerts using Open Cybersecurity Schema Framework  
  **Autonomous Mitigation** – Automatic IP blocking via Cloudflare Firewall API for critical threats  
+ **Self-Healing IPS** – Automated cleanup of expired firewall rules every 30 minutes  
+ **AI Explainability** – Human-readable summaries for Junior Security Analysts  
  **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
  **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
  **Zero Infrastructure** – No servers, databases, or containers to manage
@@ -503,6 +508,81 @@ CLOUDFLARE_ZONE_ID = ""
 ```
 
 Sentinel will continue threat analysis and SOC alerting without IP blocking.
+
+### Self-Healing IPS
+
+Sentinel AI includes **automated cleanup** of expired IP blocks, ensuring your firewall rules don't accumulate indefinitely.
+
+**How It Works:**
+- **Cron Trigger**: Runs every 30 minutes automatically
+- **KV Scanning**: Lists all `mitigation:*` keys to find expired rules
+- **Expiry Check**: Compares current time against `expiresAt` timestamp
+- **API Cleanup**: Deletes expired rules from Cloudflare Firewall via API
+- **Metadata Removal**: Cleans up KV entries after successful deletion
+
+**Monitoring:**
+```bash
+wrangler tail --format pretty
+```
+
+**Log Output:**
+```
+[Sentinel Cleanup] Starting self-healing cleanup at 2026-02-04T12:30:00Z
+[Sentinel Cleanup] Deleted expired rule cf-rule-abc123 for IP 203.0.113.42
+[Sentinel Cleanup] Completed: 3 rules deleted, 0 errors, 5 total keys processed
+```
+
+**Configuration:**
+The cron schedule is defined in `wrangler.toml`:
+```toml
+[triggers]
+crons = ["*/30 * * * *"]  # Every 30 minutes
+```
+
+Adjust the schedule as needed (e.g., `"0 * * * *"` for hourly).
+
+### AI Explainability for Analysts
+
+Every security assessment includes an **executive_summary** field designed for Junior Security Analysts with limited technical background.
+
+**Example Summaries:**
+
+**SQL Injection (riskScore: 98)**
+```
+"This request attempts to bypass login authentication by injecting SQL code 
+that always evaluates to true, potentially granting unauthorized access to 
+the entire user database."
+```
+
+**XSS Attack (riskScore: 90)**
+```
+"An attacker is trying to inject malicious JavaScript code into the webpage 
+that could steal user credentials or hijack their session when the page loads."
+```
+
+**Benign Traffic (riskScore: 0)**
+```
+"This is normal, safe text with no security concerns detected."
+```
+
+**Benefits:**
+- ✅ **Faster Triage**: Analysts understand threats without deep technical knowledge
+- ✅ **Training Tool**: Helps junior analysts learn attack patterns
+- ✅ **Executive Reporting**: Plain-English summaries for management
+- ✅ **OCSF Integration**: Included in `finding_info.desc` field for SIEM display
+
+**API Response:**
+```json
+{
+  "assessment": {
+    "attackType": "SQLi",
+    "riskScore": 98,
+    "executive_summary": "This request attempts to bypass login...",
+    "explanation": "Boolean-based SQL injection using tautology '1=1'...",
+    ...
+  }
+}
+```
 
 ## Project Structure
 

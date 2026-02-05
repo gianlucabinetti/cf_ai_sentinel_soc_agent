@@ -161,25 +161,93 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
                     severity = "medium";
                 }
 
-                // Construct SOC alert payload
+                // Map severity to OCSF severity_id
+                // OCSF Severity: 1=Informational, 2=Low, 3=Medium, 4=High, 5=Critical, 6=Fatal
+                let severity_id = 4; // Default: High
+                if (assessment.riskScore >= 95) {
+                    severity_id = 5; // Critical
+                } else if (assessment.riskScore >= 90) {
+                    severity_id = 4; // High
+                } else if (assessment.riskScore >= 70) {
+                    severity_id = 3; // Medium
+                } else {
+                    severity_id = 2; // Low
+                }
+
+                // Construct OCSF-compliant Detection Finding payload
+                // OCSF Schema: https://schema.ocsf.io/1.0.0/classes/detection_finding
                 const alertPayload = {
-                    alertId: `scan-${cacheKey}`,
-                    severity,
-                    source: "Sentinel AI Agent",
-                    timestamp: new Date().toISOString(),
-                    assessment: {
-                        attackType: assessment.attackType,
-                        confidence: assessment.confidence,
-                        riskScore: assessment.riskScore,
-                        action: assessment.action,
-                        explanation: assessment.explanation,
-                        impact: assessment.impact,
-                        mitigation: assessment.mitigation,
+                    // OCSF Core Fields
+                    class_uid: 2004, // Detection Finding
+                    class_name: "Detection Finding",
+                    category_uid: 2, // Findings
+                    category_name: "Findings",
+                    activity_id: 1, // Create
+                    activity_name: "Create",
+                    severity_id,
+                    severity: severity, // Human-readable: critical, high, medium
+                    time: Date.now(),
+                    
+                    // Finding Information
+                    finding_info: {
+                        uid: `scan-${cacheKey}`,
+                        title: `${assessment.attackType} Detected`,
+                        desc: assessment.executive_summary, // Human-readable summary for analysts
+                        types: [assessment.attackType],
+                        created_time: new Date(assessment.timestamp).getTime(),
+                        modified_time: Date.now(),
                     },
+                    
+                    // Detection Metadata
                     metadata: {
-                        cacheKey,
-                        originalTimestamp: assessment.timestamp,
+                        product: {
+                            name: "Sentinel AI",
+                            vendor_name: "Sentinel AI",
+                            version: "1.0.0",
+                        },
+                        version: "1.0.0",
                     },
+                    
+                    // Observables (Attack Details)
+                    observables: [
+                        {
+                            name: "attack_type",
+                            type: "Other",
+                            value: assessment.attackType,
+                        },
+                        {
+                            name: "risk_score",
+                            type: "Other",
+                            value: assessment.riskScore.toString(),
+                        },
+                        {
+                            name: "confidence",
+                            type: "Other",
+                            value: assessment.confidence,
+                        },
+                    ],
+                    
+                    // Remediation
+                    remediation: {
+                        desc: assessment.mitigation,
+                        kb_articles: [],
+                    },
+                    
+                    // Raw Data (for SIEM correlation)
+                    raw_data: JSON.stringify({
+                        cacheKey,
+                        assessment: {
+                            attackType: assessment.attackType,
+                            confidence: assessment.confidence,
+                            riskScore: assessment.riskScore,
+                            action: assessment.action,
+                            explanation: assessment.explanation,
+                            impact: assessment.impact,
+                            mitigation: assessment.mitigation,
+                            executive_summary: assessment.executive_summary,
+                        },
+                        originalTimestamp: assessment.timestamp,
+                    }),
                 };
 
                 // Prepare request headers
