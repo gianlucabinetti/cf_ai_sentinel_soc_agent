@@ -153,6 +153,10 @@ export default {
     /**
      * Scheduled Handler (Cron Trigger)
      * Self-Healing Cleanup: Automatically removes expired IP blocks from Cloudflare Firewall
+     * 
+     * Architecture: Uses cursor-based pagination to support infinite scaling.
+     * KV list() returns max 1,000 keys per request. For large deployments with 10,000+ blocked IPs,
+     * we must paginate through all keys using the cursor returned by each batch.
      */
     async scheduled(
         event: ScheduledEvent,
@@ -162,69 +166,98 @@ export default {
         console.log(`[Sentinel Cleanup] Starting self-healing cleanup at ${new Date().toISOString()}`);
 
         try {
-            // List all mitigation metadata keys from KV
-            const list = await env.SENTINEL_KV.list({ prefix: "mitigation:" });
-            
             let cleanedCount = 0;
             let errorCount = 0;
+            let totalKeysScanned = 0;
+            let batchNumber = 0;
+            let cursor: string | undefined = undefined;
+            let listComplete = false;
 
-            for (const key of list.keys) {
-                try {
-                    // Get mitigation metadata
-                    const metadataStr = await env.SENTINEL_KV.get(key.name);
-                    if (!metadataStr) {
-                        console.log(`[Sentinel Cleanup] No metadata found for ${key.name}, skipping`);
-                        continue;
-                    }
+            // Cursor-based pagination loop
+            // KV list() returns up to 1,000 keys per call + a cursor for the next batch
+            do {
+                batchNumber++;
+                
+                // List mitigation metadata keys with pagination
+                // limit: 1000 (max allowed by Cloudflare KV)
+                const listResult: Awaited<ReturnType<typeof env.SENTINEL_KV.list>> = await env.SENTINEL_KV.list({ 
+                    prefix: "mitigation:",
+                    limit: 1000,
+                    cursor: cursor
+                });
 
-                    const metadata = JSON.parse(metadataStr) as {
-                        ruleId: string;
-                        sourceIP: string;
-                        expiresAt: string;
-                    };
+                const batchSize = listResult.keys.length;
+                totalKeysScanned += batchSize;
+                listComplete = listResult.list_complete;
 
-                    // Check if rule has expired
-                    const expiresAt = new Date(metadata.expiresAt);
-                    const now = new Date();
+                console.log(`[Sentinel Cleanup] Batch ${batchNumber}: Processing ${batchSize} keys (cursor: ${cursor || 'initial'})`);
 
-                    if (now >= expiresAt) {
-                        // Rule has expired - delete from Cloudflare Firewall
-                        if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID) {
-                            const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules/${metadata.ruleId}`;
-                            
-                            const response = await fetch(deleteUrl, {
-                                method: "DELETE",
-                                headers: {
-                                    "Authorization": `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
-                                    "Content-Type": "application/json",
-                                },
-                            });
-
-                            if (response.ok) {
-                                console.log(`[Sentinel Cleanup] Deleted expired rule ${metadata.ruleId} for IP ${metadata.sourceIP}`);
-                                cleanedCount++;
-                            } else {
-                                const errorText = await response.text();
-                                console.error(`[Sentinel Cleanup] Failed to delete rule ${metadata.ruleId}: ${response.status} ${errorText}`);
-                                errorCount++;
-                            }
-                        } else {
-                            console.log(`[Sentinel Cleanup] Cloudflare API not configured, skipping rule deletion for ${metadata.sourceIP}`);
+                // Process each key in the current batch
+                for (const key of listResult.keys) {
+                    try {
+                        // Get mitigation metadata
+                        const metadataStr = await env.SENTINEL_KV.get(key.name);
+                        if (!metadataStr) {
+                            console.log(`[Sentinel Cleanup] No metadata found for ${key.name}, skipping`);
+                            continue;
                         }
 
-                        // Delete metadata from KV (cleanup even if API call failed)
-                        await env.SENTINEL_KV.delete(key.name);
-                    } else {
-                        const timeRemaining = Math.round((expiresAt.getTime() - now.getTime()) / 1000 / 60);
-                        console.log(`[Sentinel Cleanup] Rule ${metadata.ruleId} for IP ${metadata.sourceIP} expires in ${timeRemaining} minutes`);
-                    }
-                } catch (error) {
-                    console.error(`[Sentinel Cleanup] Error processing ${key.name}:`, error);
-                    errorCount++;
-                }
-            }
+                        const metadata = JSON.parse(metadataStr) as {
+                            ruleId: string;
+                            sourceIP: string;
+                            expiresAt: string;
+                        };
 
-            console.log(`[Sentinel Cleanup] Completed: ${cleanedCount} rules deleted, ${errorCount} errors, ${list.keys.length} total keys processed`);
+                        // Check if rule has expired
+                        const expiresAt = new Date(metadata.expiresAt);
+                        const now = new Date();
+
+                        if (now >= expiresAt) {
+                            // Rule has expired - delete from Cloudflare Firewall
+                            if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID) {
+                                const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules/${metadata.ruleId}`;
+                                
+                                const response = await fetch(deleteUrl, {
+                                    method: "DELETE",
+                                    headers: {
+                                        "Authorization": `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+                                        "Content-Type": "application/json",
+                                    },
+                                });
+
+                                if (response.ok) {
+                                    console.log(`[Sentinel Cleanup] Deleted expired rule ${metadata.ruleId} for IP ${metadata.sourceIP}`);
+                                    cleanedCount++;
+                                } else {
+                                    const errorText = await response.text();
+                                    console.error(`[Sentinel Cleanup] Failed to delete rule ${metadata.ruleId}: ${response.status} ${errorText}`);
+                                    errorCount++;
+                                }
+                            } else {
+                                console.log(`[Sentinel Cleanup] Cloudflare API not configured, skipping rule deletion for ${metadata.sourceIP}`);
+                            }
+
+                            // Delete metadata from KV (cleanup even if API call failed)
+                            await env.SENTINEL_KV.delete(key.name);
+                        } else {
+                            const timeRemaining = Math.round((expiresAt.getTime() - now.getTime()) / 1000 / 60);
+                            console.log(`[Sentinel Cleanup] Rule ${metadata.ruleId} for IP ${metadata.sourceIP} expires in ${timeRemaining} minutes`);
+                        }
+                    } catch (error) {
+                        console.error(`[Sentinel Cleanup] Error processing ${key.name}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                // Update cursor for next iteration (only exists if list_complete is false)
+                cursor = listComplete ? undefined : (listResult as any).cursor;
+
+                console.log(`[Sentinel Cleanup] Batch ${batchNumber} complete: ${batchSize} keys processed, list_complete: ${listComplete}`);
+
+            } while (!listComplete); // Continue while there are more pages
+
+            // Final summary log showing total across all paginated batches
+            console.log(`[Sentinel Cleanup] ✅ Cleanup complete: ${cleanedCount} rules deleted, ${errorCount} errors, ${totalKeysScanned} total keys scanned across ${batchNumber} batches`);
         } catch (error) {
             console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
         }
