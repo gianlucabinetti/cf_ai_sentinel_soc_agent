@@ -634,17 +634,127 @@ that could steal user credentials or hijack their session when the page loads."
 
 ## Project Structure
 
+### Backend (Cloudflare Worker)
 ```
 src/
-├── index.ts       # API gateway (fetch handler)
-├── workflow.ts    # 3-step analysis pipeline
+├── index.ts       # API gateway (fetch + scheduled handlers)
+├── workflow.ts    # 5-step analysis pipeline
 ├── types.ts       # TypeScript interfaces and type guards
-├── prompts.ts     # AI system prompt
+├── prompts.ts     # AI system prompt with OCSF schema
 └── memory.ts      # KV caching abstraction
 
 tests/
 └── sentinel.test.ts  # Smoke tests (type guards, hashing)
 ```
+
+### Frontend (Vite + TypeScript)
+```
+pages/
+├── package.json          # Vite + TypeScript + Tailwind
+├── tsconfig.json         # Strict TypeScript config
+├── vite.config.ts        # Vite with API proxy
+├── tailwind.config.js    # Custom security theme
+├── index.html            # Dashboard UI
+└── src/
+    ├── main.ts           # TypeScript UI logic
+    ├── types.ts          # API response interfaces
+    └── style.css         # Tailwind CSS imports
+```
+
+## Frontend Architecture
+
+Sentinel AI includes a **modern TypeScript dashboard** built with Vite and Tailwind CSS, providing real-time visibility into threat detection and autonomous mitigation.
+
+### Key Features
+
+**Executive Summary Display:**
+- Prominently displays AI-generated `executive_summary` for analysts
+- Color-coded risk badges (Critical/High/Medium/Low)
+- Attack type, confidence level, and recommended action
+- Human-readable explanations for Junior Security Analysts
+
+**Mitigation Status Table:**
+- Real-time display of active IP blocks
+- Fetches from `/v1/mitigations` API endpoint
+- Shows: IP address, attack type, risk score (visual bar), time remaining, blocked timestamp
+- Auto-refresh every 60 seconds
+- Manual refresh button
+
+**Professional Dark Mode Theme:**
+- Custom "Sentinel" color palette (matrix green accents)
+- Gradient backgrounds and glowing effects
+- Responsive 2-column layout
+- Smooth animations and transitions
+- Custom scrollbars
+
+### Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Build Tool | Vite 5.x |
+| Language | TypeScript (strict mode) |
+| Styling | Tailwind CSS 3.x |
+| Font | JetBrains Mono (monospace) |
+
+### Development
+
+**Start dev server:**
+```bash
+cd pages
+npm install
+npm run dev
+```
+
+Access at: `http://localhost:5173`
+
+**Build for production:**
+```bash
+cd pages
+npm run build
+```
+
+**Deploy to Cloudflare Pages:**
+```bash
+cd pages
+npx wrangler pages deploy dist --project-name=sentinel-ai-dashboard
+```
+
+### API Endpoints Used
+
+**POST /v1/analyze** - Analyze security payloads
+```typescript
+Request: { payload: string }
+Response: { status, id, cacheKey, assessment }
+```
+
+**GET /v1/mitigations** - List active IP blocks
+```typescript
+Response: { 
+  success: boolean,
+  count: number,
+  mitigations: MitigationRecord[]
+}
+```
+
+### Type Safety
+
+All API interactions are strictly typed:
+```typescript
+interface AnalyzeResponse {
+  status: 'analyzed' | 'cached' | 'error';
+  id: string;
+  cacheKey: string;
+  assessment: SecurityAssessment;
+}
+
+interface MitigationsResponse {
+  success: boolean;
+  count: number;
+  mitigations: MitigationRecord[];
+}
+```
+
+For complete frontend implementation details, see [FRONTEND_IMPLEMENTATION.md](../FRONTEND_IMPLEMENTATION.md).
 
 ## Testing
 

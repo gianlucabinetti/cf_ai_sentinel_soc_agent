@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-sentinel-bg text-gray-100 font-mono;
+  }
+}
+
+@layer components {
+  .spinner {
+    @apply inline-block w-4 h-4 border-2 border-sentinel-bg border-t-transparent rounded-full animate-spin mr-2;
+  }
+  
+  .panel {
+    @apply bg-sentinel-panel border border-sentinel-border rounded-lg p-6 shadow-xl;
+  }
+  
+  .status-dot {
+    @apply w-2.5 h-2.5 bg-sentinel-accent rounded-full;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-sentinel-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-sentinel-accent rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-sentinel-accent-dim;
+}

@@ -40,7 +40,94 @@ export default {
             });
         }
 
-        // --- 3. Workflow Trigger ---
+        // --- 3. List Active Mitigations ---
+        if (request.method === "GET" && url.pathname === "/v1/mitigations") {
+            try {
+                const mitigations: Array<{
+                    sourceIP: string;
+                    ruleId: string;
+                    attackType: string;
+                    riskScore: number;
+                    createdAt: string;
+                    expiresAt: string;
+                    timeRemaining: string;
+                }> = [];
+
+                // List all mitigation metadata keys from KV
+                let cursor: string | undefined = undefined;
+                let listComplete = false;
+                
+                do {
+                    const listResult: Awaited<ReturnType<typeof env.SENTINEL_KV.list>> = await env.SENTINEL_KV.list({
+                        prefix: "mitigation:",
+                        limit: 100, // Limit for UI display
+                        cursor: cursor
+                    });
+                    
+                    listComplete = listResult.list_complete;
+
+                    for (const key of listResult.keys) {
+                        const metadataStr = await env.SENTINEL_KV.get(key.name);
+                        if (!metadataStr) continue;
+
+                        try {
+                            const metadata = JSON.parse(metadataStr) as {
+                                ruleId: string;
+                                sourceIP: string;
+                                attackType: string;
+                                riskScore: number;
+                                createdAt: string;
+                                expiresAt: string;
+                            };
+
+                            // Calculate time remaining
+                            const expiresAt = new Date(metadata.expiresAt);
+                            const now = new Date();
+                            const minutesRemaining = Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / 1000 / 60));
+                            
+                            const timeRemaining = minutesRemaining > 60
+                                ? `${Math.floor(minutesRemaining / 60)}h ${minutesRemaining % 60}m`
+                                : `${minutesRemaining}m`;
+
+                            mitigations.push({
+                                sourceIP: metadata.sourceIP,
+                                ruleId: metadata.ruleId,
+                                attackType: metadata.attackType,
+                                riskScore: metadata.riskScore,
+                                createdAt: metadata.createdAt,
+                                expiresAt: metadata.expiresAt,
+                                timeRemaining
+                            });
+                        } catch (parseError) {
+                            console.error(`Failed to parse mitigation metadata for ${key.name}:`, parseError);
+                        }
+                    }
+
+                    cursor = listComplete ? undefined : (listResult as any).cursor;
+                } while (!listComplete);
+
+                // Sort by risk score (highest first)
+                mitigations.sort((a, b) => b.riskScore - a.riskScore);
+
+                return new Response(JSON.stringify({
+                    success: true,
+                    count: mitigations.length,
+                    mitigations
+                }), {
+                    headers: { "Content-Type": "application/json", ...corsHeaders },
+                    status: 200
+                });
+            } catch (error) {
+                console.error("Mitigations API Error:", error);
+                const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+                return new Response(JSON.stringify({ error: errorMessage }), {
+                    status: 500,
+                    headers: { "Content-Type": "application/json", ...corsHeaders }
+                });
+            }
+        }
+
+        // --- 4. Workflow Trigger ---
         if (request.method === "POST" && url.pathname === "/v1/analyze") {
             try {
                 // Strict JSON parsing
