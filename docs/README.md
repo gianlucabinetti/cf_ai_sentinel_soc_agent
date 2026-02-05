@@ -456,22 +456,22 @@ npm run deploy
 
 ### Security Features
 
-** Scoped Permissions**
+**Scoped Permissions**
 - API token has ONLY Firewall Services access
 - Cannot modify DNS, SSL, or other zone settings
 - Follows principle of least privilege
 
-** Rate Limit Handling**
+**Rate Limit Handling**
 - Detects 429 (Too Many Requests) responses
 - Automatic retry with exponential backoff
 - Respects `Retry-After` header
 
-** Non-Blocking Execution**
+**Non-Blocking Execution**
 - Mitigation failures don't crash workflow
 - Assessment and alerts still complete
 - Errors logged for monitoring
 
-** Automatic Cleanup**
+**Automatic Cleanup**
 - Rule metadata stored in KV with 1-hour TTL
 - Expired rules can be cleaned via Cron Trigger
 - Prevents indefinite IP blocks
