@@ -4,6 +4,7 @@ import type { AnalyzeRequest, AnalyzeResponse, MitigationsResponse, MitigationRe
 // API Configuration
 const API_BASE = 'http://127.0.0.1:8787';
 
+<<<<<<< HEAD
 // State
 let isAnalyzing = false;
 
@@ -244,3 +245,13 @@ async function analyzeThreat(payload: string) {
 
 // Initialize on load
 initDashboard();
+=======
+// Set loading state immediately to verify JS is alive
+document.getElementById("app")!.innerHTML = `
+  <div style="padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+    <h1> Sentinel SOC Agent</h1>
+    <p style="color: #666;">Loading... Frontend is alive!</p>
+    <p style="font-size: 12px; color: #999;">API Base: ${API_BASE}</p>
+  </div>
+`;
+>>>>>>> d50b0e99660347467724158498bcf0759dde986c

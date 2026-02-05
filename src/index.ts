@@ -356,7 +356,7 @@ export default {
             } while (!listComplete); // Continue while there are more pages
 
             // Final summary log showing total across all paginated batches
-            console.log(`[Sentinel Cleanup] ✅ Cleanup complete: ${cleanedCount} rules deleted, ${errorCount} errors, ${totalKeysScanned} total keys scanned across ${batchNumber} batches`);
+            console.log(`[Sentinel Cleanup]  Cleanup complete: ${cleanedCount} rules deleted, ${errorCount} errors, ${totalKeysScanned} total keys scanned across ${batchNumber} batches`);
         } catch (error) {
             console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
         }
