@@ -663,7 +663,9 @@ pages/
 
 ## Frontend Architecture
 
-Sentinel AI includes a **modern TypeScript dashboard** built with Vite and Tailwind CSS, providing real-time visibility into threat detection and autonomous mitigation.
+**Frontend: Modern SPA built with Vite, TypeScript, and Tailwind CSS**
+
+Sentinel AI includes a **production-grade Single Page Application (SPA)** built with Vite, TypeScript, and Tailwind CSS, providing real-time visibility into threat detection and autonomous mitigation. The entire UI is programmatically generated in TypeScript with strict typing and professional dark mode security theme.
 
 ### Key Features
 
