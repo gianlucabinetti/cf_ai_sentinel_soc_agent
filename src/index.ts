@@ -90,12 +90,24 @@ export default {
                     });
                 }
 
+                // Extract source IP from request headers
+                // Cloudflare provides the real client IP in CF-Connecting-IP header
+                const sourceIP = request.headers.get("CF-Connecting-IP") || 
+                                request.headers.get("X-Forwarded-For")?.split(",")[0].trim() ||
+                                request.headers.get("X-Real-IP") ||
+                                undefined;
+
                 // Cache miss - run workflow logic directly
                 // Note: Without Workflows binding, we run synchronously
                 const workflow = new SentinelWorkflow(env);
                 const assessment = await workflow.run(
                     {
-                        payload: { payload, cacheKey, timestamp: new Date().toISOString() },
+                        payload: { 
+                            payload, 
+                            cacheKey, 
+                            timestamp: new Date().toISOString(),
+                            sourceIP 
+                        },
                         timestamp: Date.now()
                     },
                     {

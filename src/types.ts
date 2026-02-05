@@ -10,6 +10,8 @@ export interface Env {
     API_KEY: string;
     SOC_WEBHOOK_URL?: string; // Optional: SOC platform webhook endpoint
     SOC_API_KEY?: string; // Optional: Authentication key for SOC webhook
+    CLOUDFLARE_API_TOKEN?: string; // Optional: Cloudflare API token for auto-mitigation
+    CLOUDFLARE_ZONE_ID?: string; // Optional: Cloudflare Zone ID for IP blocking
 }
 
 // --- API Request/Response ---
@@ -31,6 +33,7 @@ export interface WorkflowParams {
     payload: string;
     cacheKey: string;
     timestamp: string;
+    sourceIP?: string; // Optional: Source IP address for auto-mitigation
 }
 
 // --- Domain Models ---
