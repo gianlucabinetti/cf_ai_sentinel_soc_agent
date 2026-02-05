@@ -77,28 +77,28 @@ npm run deploy
 
 ## Security Features
 
-### ✅ Scoped API Permissions
+###  Scoped API Permissions
 - Token has **ONLY** Firewall Services permissions
 - Cannot modify DNS, SSL, or other zone settings
 - Follows principle of least privilege
 
-### ✅ Rate Limit Handling
+###  Rate Limit Handling
 - Detects 429 (Too Many Requests) responses
 - Automatically retries with exponential backoff
 - Respects `Retry-After` header from Cloudflare API
 - Workflow durability ensures no lost mitigation attempts
 
-### ✅ Non-Blocking Execution
+###  Non-Blocking Execution
 - Mitigation failures don't crash the workflow
 - Assessment and SOC alert still complete successfully
 - Errors are logged for monitoring
 
-### ✅ Automatic Cleanup
+###  Automatic Cleanup
 - Rule metadata stored in KV with 1-hour TTL
 - Expired rules can be cleaned up via Cron Trigger
 - Prevents indefinite IP blocks
 
-### ✅ Source IP Validation
+###  Source IP Validation
 - Extracts IP from `CF-Connecting-IP` (Cloudflare's trusted header)
 - Fallback to `X-Forwarded-For` and `X-Real-IP`
 - Skips mitigation if no valid IP is found
@@ -117,10 +117,10 @@ AI Analysis:
 - action: "block"
 
 Auto-Mitigation:
-✅ IP 203.0.113.42 blocked via Cloudflare Firewall
-✅ Block expires in 1 hour
-✅ Rule ID: cf-rule-abc123
-✅ Metadata stored in KV: mitigation:203.0.113.42
+ IP 203.0.113.42 blocked via Cloudflare Firewall
+ Block expires in 1 hour
+ Rule ID: cf-rule-abc123
+ Metadata stored in KV: mitigation:203.0.113.42
 ```
 
 ### Scenario 2: High-Risk XSS (Below Threshold)
@@ -135,8 +135,8 @@ AI Analysis:
 - action: "block"
 
 Auto-Mitigation:
-❌ Skipped (riskScore < 95)
-✅ SOC alert still triggered
+ Skipped (riskScore < 95)
+ SOC alert still triggered
 ```
 
 ### Scenario 3: Rate Limit Encountered
@@ -149,9 +149,9 @@ Cloudflare API Response:
 - Retry-After: 60 seconds
 
 Auto-Mitigation:
-⏳ Workflow retries after 60 seconds
-✅ Block applied on retry
-✅ No manual intervention required
+ Workflow retries after 60 seconds
+ Block applied on retry
+ No manual intervention required
 ```
 
 ## Monitoring & Observability
@@ -377,14 +377,14 @@ Authorization: Bearer {api_token}
 
 ## Best Practices
 
-### ✅ DO
+###  DO
 - Use scoped API tokens with minimal permissions
 - Store API tokens as Wrangler secrets in production
 - Monitor mitigation logs for false positives
 - Implement Cron Trigger for automatic rule cleanup
 - Test with low-risk payloads before enabling in production
 
-### ❌ DON'T
+###  DON'T
 - Commit API tokens to version control
 - Use Account-level API keys (too broad permissions)
 - Set risk threshold below 90 (risk of false positives)
@@ -396,10 +396,10 @@ Authorization: Bearer {api_token}
 The auto-mitigation system provides **autonomous threat response** at the edge, blocking critical attacks in real-time without manual intervention. Combined with SOC alerting, Sentinel AI delivers a complete security automation pipeline.
 
 **Key Benefits:**
-- ⚡ **Instant Response**: Blocks IPs within seconds of detection
-- 🔒 **Zero Trust**: Fail-closed on uncertainty
-- 🔄 **Durable**: Automatic retries on API failures
-- 📊 **Observable**: Comprehensive logging and monitoring
-- 🛡️ **Secure**: Scoped permissions and secret management
+-  **Instant Response**: Blocks IPs within seconds of detection
+-  **Zero Trust**: Fail-closed on uncertainty
+-  **Durable**: Automatic retries on API failures
+-  **Observable**: Comprehensive logging and monitoring
+-  **Secure**: Scoped permissions and secret management
 
 For questions or issues, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md) or open a GitHub issue.
