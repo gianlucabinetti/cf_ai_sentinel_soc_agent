@@ -15,6 +15,18 @@ export default {
         env: Env,
         ctx: ExecutionContext
     ): Promise<Response> {
+        // --- Handle Preflight (OPTIONS) at the very top ---
+        if (request.method === "OPTIONS") {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                }
+            });
+        }
+
         const url = new URL(request.url);
 
         // --- Global CORS Headers ---
@@ -24,14 +36,6 @@ export default {
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
         };
-
-        // --- 1. Handle Preflight (OPTIONS) ---
-        if (request.method === "OPTIONS") {
-            return new Response(null, {
-                status: 204,
-                headers: corsHeaders
-            });
-        }
 
         // --- 2. Health Check ---
         if (request.method === "GET" && url.pathname === "/health") {
