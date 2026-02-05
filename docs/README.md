@@ -212,12 +212,12 @@ Alerts are automatically triggered when either condition is met:
 
 | Condition | Alert Triggered | Severity Level |
 |-----------|----------------|----------------|
-| `riskScore >= 90` | ✅ Yes | **Critical** |
-| `riskScore >= 80` | ✅ Yes | **High** |
-| `riskScore >= 70` AND `action = "block"` | ✅ Yes | **High** |
-| `action = "block"` (any score) | ✅ Yes | **High/Critical** |
+| `riskScore >= 90` |  Yes | **Critical** |
+| `riskScore >= 80` |  Yes | **High** |
+| `riskScore >= 70` AND `action = "block"` |  Yes | **High** |
+| `action = "block"` (any score) |  Yes | **High/Critical** |
 | `riskScore < 80` AND `action = "allow"` | ❌ No | N/A |
-| `action = "flag"` | ✅ Yes (if score > 80) | **Medium/High** |
+| `action = "flag"` |  Yes (if score > 80) | **Medium/High** |
 
 **Example Scenarios:**
 - **SQL Injection (riskScore: 95, action: "block")** → Critical alert sent to SOC
@@ -371,34 +371,34 @@ Sentinel's response escalates based on threat severity:
 
 | Risk Score | Action | SOC Alert | IP Blocking | Duration |
 |------------|--------|-----------|-------------|----------|
-| **95-100** (Critical) | Block | ✅ Critical | ✅ **Auto-blocked** | 1 hour |
-| **80-94** (High) | Block/Flag | ✅ High | ❌ Manual review | N/A |
-| **70-79** (Medium) | Flag | ✅ Medium (if action=block) | ❌ No | N/A |
-| **0-69** (Low) | Allow | ❌ No | ❌ No | N/A |
+| **95-100** (Critical) | Block |  Critical |  **Auto-blocked** | 1 hour |
+| **80-94** (High) | Block/Flag |  High |  Manual review | N/A |
+| **70-79** (Medium) | Flag |  Medium (if action=block) |  No | N/A |
+| **0-69** (Low) | Allow |  No |  No | N/A |
 
 **Example Scenarios:**
 
 **Critical SQL Injection (Score: 98)**
 ```
-✅ AI Analysis Complete
-✅ SOC Alert Sent (Critical)
-✅ IP 203.0.113.42 Auto-Blocked (1 hour)
-✅ Rule ID: cf-rule-abc123
+ AI Analysis Complete
+ SOC Alert Sent (Critical)
+ IP 203.0.113.42 Auto-Blocked (1 hour)
+ Rule ID: cf-rule-abc123
 ```
 
 **High-Risk XSS (Score: 85)**
 ```
-✅ AI Analysis Complete
-✅ SOC Alert Sent (High)
-❌ No Auto-Block (Manual review required)
+ AI Analysis Complete
+ SOC Alert Sent (High)
+ No Auto-Block (Manual review required)
 ```
 
 **Suspicious Pattern (Score: 75)**
 ```
-✅ AI Analysis Complete
-⚠️ Flagged for Review
-❌ No SOC Alert (Below threshold)
-❌ No Auto-Block
+ AI Analysis Complete
+ Flagged for Review
+ No SOC Alert (Below threshold)
+ No Auto-Block
 ```
 
 ### How Auto-Mitigation Works
@@ -458,22 +458,22 @@ npm run deploy
 
 ### Security Features
 
-**✅ Scoped Permissions**
+** Scoped Permissions**
 - API token has ONLY Firewall Services access
 - Cannot modify DNS, SSL, or other zone settings
 - Follows principle of least privilege
 
-**✅ Rate Limit Handling**
+** Rate Limit Handling**
 - Detects 429 (Too Many Requests) responses
 - Automatic retry with exponential backoff
 - Respects `Retry-After` header
 
-**✅ Non-Blocking Execution**
+** Non-Blocking Execution**
 - Mitigation failures don't crash workflow
 - Assessment and alerts still complete
 - Errors logged for monitoring
 
-**✅ Automatic Cleanup**
+** Automatic Cleanup**
 - Rule metadata stored in KV with 1-hour TTL
 - Expired rules can be cleaned via Cron Trigger
 - Prevents indefinite IP blocks
