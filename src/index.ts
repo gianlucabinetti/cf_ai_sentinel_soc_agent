@@ -233,6 +233,14 @@ export default {
             }
         }
 
+        // --- 5. Root Path - API Status ---
+        if (request.method === "GET" && url.pathname === "/") {
+            return new Response("Sentinel API is Online", {
+                status: 200,
+                headers: { "Content-Type": "text/plain", ...corsHeaders }
+            });
+        }
+
         // --- 404 Default ---
         return new Response("Not Found", { status: 404, headers: corsHeaders });
     },
