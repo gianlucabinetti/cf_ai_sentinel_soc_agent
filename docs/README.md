@@ -549,7 +549,7 @@ wrangler tail --format pretty
 [Sentinel Cleanup] Batch 1: Processing 247 keys (cursor: initial)
 [Sentinel Cleanup] Deleted expired rule cf-rule-abc123 for IP 203.0.113.42
 [Sentinel Cleanup] Batch 1 complete: 247 keys processed, list_complete: true
-[Sentinel Cleanup] ✅ Cleanup complete: 3 rules deleted, 0 errors, 247 total keys scanned across 1 batches
+[Sentinel Cleanup]  Cleanup complete: 3 rules deleted, 0 errors, 247 total keys scanned across 1 batches
 ```
 
 **Log Output (Large Deployment - Multiple Batches):**
@@ -563,7 +563,7 @@ wrangler tail --format pretty
 [Sentinel Cleanup] Batch 3 complete: 1000 keys processed, list_complete: false
 [Sentinel Cleanup] Batch 4: Processing 247 keys (cursor: ZmluYWwtYmF0Y2g...)
 [Sentinel Cleanup] Batch 4 complete: 247 keys processed, list_complete: true
-[Sentinel Cleanup] ✅ Cleanup complete: 15 rules deleted, 0 errors, 3,247 total keys scanned across 4 batches
+[Sentinel Cleanup]  Cleanup complete: 15 rules deleted, 0 errors, 3,247 total keys scanned across 4 batches
 ```
 
 **Understanding the Logs:**
@@ -614,10 +614,10 @@ that could steal user credentials or hijack their session when the page loads."
 ```
 
 **Benefits:**
-- ✅ **Faster Triage**: Analysts understand threats without deep technical knowledge
-- ✅ **Training Tool**: Helps junior analysts learn attack patterns
-- ✅ **Executive Reporting**: Plain-English summaries for management
-- ✅ **OCSF Integration**: Included in `finding_info.desc` field for SIEM display
+-  **Faster Triage**: Analysts understand threats without deep technical knowledge
+-  **Training Tool**: Helps junior analysts learn attack patterns
+-  **Executive Reporting**: Plain-English summaries for management
+-  **OCSF Integration**: Included in `finding_info.desc` field for SIEM display
 
 **API Response:**
 ```json
@@ -739,7 +739,7 @@ We welcome contributions from the security research community. See [CONTRIBUTING
 
 Co-Technical Chair for the Society of Hispanic Professional Engineers (SHPE) at Florida Atlantic University. Focused on advancing edge-native AI security and automated threat response.
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?logo=linkedin&logoColor=white)](https://linkedin.com/in/your-profile)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gianlucabinetti/)
 
 ## License
 
