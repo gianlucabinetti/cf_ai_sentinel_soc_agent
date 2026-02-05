@@ -216,7 +216,7 @@ Alerts are automatically triggered when either condition is met:
 | `riskScore >= 80` |  Yes | **High** |
 | `riskScore >= 70` AND `action = "block"` |  Yes | **High** |
 | `action = "block"` (any score) |  Yes | **High/Critical** |
-| `riskScore < 80` AND `action = "allow"` | ❌ No | N/A |
+| `riskScore < 80` AND `action = "allow"` |  No | N/A |
 | `action = "flag"` |  Yes (if score > 80) | **Medium/High** |
 
 **Example Scenarios:**
