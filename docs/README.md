@@ -27,6 +27,7 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
  **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
  **Durable Workflows** – Automatic retries and state management for long-running analysis  
  **Durable Alerting** – Automated SOC platform integration with risk-based alert triggering  
+ **Autonomous Mitigation** – Automatic IP blocking via Cloudflare Firewall API for critical threats  
  **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
  **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
  **Zero Infrastructure** – No servers, databases, or containers to manage
@@ -185,7 +186,7 @@ This satisfies the **chat input** portion of the requirement. The textarea accep
 ## How It Works
 
 ```
-Client Request → Worker (hash + cache check) → Workflow (sanitize → AI → cache → alert) → Response
+Client Request → Worker (hash + cache check) → Workflow (sanitize → AI → cache → alert → mitigate) → Response
 ```
 
 1. **Request arrives** at the edge Worker
@@ -196,6 +197,7 @@ Client Request → Worker (hash + cache check) → Workflow (sanitize → AI →
    - Step 2: AI inference (Llama 3.3-70b analyzes threat)
    - Step 3: Cache result in KV (72-hour TTL)
    - Step 4: Trigger SOC alert (if risk score > 80 or action = "block")
+   - Step 5: Auto-mitigation (if risk score >= 95, block source IP via Cloudflare API)
 5. **Structured assessment** is returned with action recommendation
 
 For deep technical details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
@@ -358,6 +360,151 @@ wrangler tail
 - The workflow continues even if alert delivery fails
 
 For advanced configuration and troubleshooting, see [SOC_INTEGRATION_SUMMARY.md](../SOC_INTEGRATION_SUMMARY.md).
+
+## Autonomous Mitigation
+
+Sentinel AI includes **autonomous threat mitigation** that automatically blocks malicious IP addresses using Cloudflare's Firewall API when critical threats are detected. This provides real-time, automated defense without manual intervention.
+
+### Risk-Based Response Matrix
+
+Sentinel's response escalates based on threat severity:
+
+| Risk Score | Action | SOC Alert | IP Blocking | Duration |
+|------------|--------|-----------|-------------|----------|
+| **95-100** (Critical) | Block | ✅ Critical | ✅ **Auto-blocked** | 1 hour |
+| **80-94** (High) | Block/Flag | ✅ High | ❌ Manual review | N/A |
+| **70-79** (Medium) | Flag | ✅ Medium (if action=block) | ❌ No | N/A |
+| **0-69** (Low) | Allow | ❌ No | ❌ No | N/A |
+
+**Example Scenarios:**
+
+**Critical SQL Injection (Score: 98)**
+```
+✅ AI Analysis Complete
+✅ SOC Alert Sent (Critical)
+✅ IP 203.0.113.42 Auto-Blocked (1 hour)
+✅ Rule ID: cf-rule-abc123
+```
+
+**High-Risk XSS (Score: 85)**
+```
+✅ AI Analysis Complete
+✅ SOC Alert Sent (High)
+❌ No Auto-Block (Manual review required)
+```
+
+**Suspicious Pattern (Score: 75)**
+```
+✅ AI Analysis Complete
+⚠️ Flagged for Review
+❌ No SOC Alert (Below threshold)
+❌ No Auto-Block
+```
+
+### How Auto-Mitigation Works
+
+1. **Threat Detection**: AI identifies critical threat (riskScore >= 95)
+2. **IP Extraction**: Source IP extracted from `CF-Connecting-IP` header
+3. **Cloudflare API Call**: Creates IP Access Rule via Firewall API
+4. **Automatic Block**: IP blocked across entire Cloudflare zone
+5. **Metadata Storage**: Rule details stored in KV for tracking
+6. **Auto-Expiry**: Block expires after 1 hour (configurable)
+
+### Configuration
+
+#### 1. Create Cloudflare API Token
+
+**Required Permissions:** Zone → Firewall Services → Edit
+
+**Steps:**
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → My Profile → API Tokens
+2. Click **"Create Token"** → **"Create Custom Token"**
+3. Set permissions:
+   - **Permissions**: Zone → Firewall Services → Edit
+   - **Zone Resources**: Include → Specific zone → [Your zone]
+4. Click **"Create Token"** and copy the token
+
+#### 2. Find Your Zone ID
+
+1. Go to Cloudflare Dashboard → [Your Domain]
+2. Scroll to **"API"** section on the right
+3. Copy the **Zone ID** (e.g., `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`)
+
+#### 3. Configure Environment Variables
+
+**Development/Testing:**
+```toml
+# wrangler.toml
+[vars]
+CLOUDFLARE_API_TOKEN = "your-test-token"
+CLOUDFLARE_ZONE_ID = "your-zone-id"
+```
+
+**Production (Recommended):**
+```bash
+# Use secrets for sensitive data
+wrangler secret put CLOUDFLARE_API_TOKEN
+# Enter token when prompted
+
+# Edit wrangler.toml for Zone ID
+[vars]
+CLOUDFLARE_ZONE_ID = "your-zone-id"
+```
+
+#### 4. Deploy
+```bash
+npm run deploy
+```
+
+### Security Features
+
+**✅ Scoped Permissions**
+- API token has ONLY Firewall Services access
+- Cannot modify DNS, SSL, or other zone settings
+- Follows principle of least privilege
+
+**✅ Rate Limit Handling**
+- Detects 429 (Too Many Requests) responses
+- Automatic retry with exponential backoff
+- Respects `Retry-After` header
+
+**✅ Non-Blocking Execution**
+- Mitigation failures don't crash workflow
+- Assessment and alerts still complete
+- Errors logged for monitoring
+
+**✅ Automatic Cleanup**
+- Rule metadata stored in KV with 1-hour TTL
+- Expired rules can be cleaned via Cron Trigger
+- Prevents indefinite IP blocks
+
+### Monitoring
+
+**View Blocked IPs:**
+1. Cloudflare Dashboard → [Your Domain] → Security → WAF → Tools
+2. Click **"IP Access Rules"**
+3. Look for rules with notes: `Auto-blocked by Sentinel AI`
+
+**Check Logs:**
+```bash
+wrangler tail
+```
+
+**Log Messages:**
+- `[Sentinel] Auto-mitigation: Blocked IP 203.0.113.42 (Rule ID: cf-rule-abc123)`
+- `[Sentinel] No auto-mitigation needed (risk: 85)`
+- `[Sentinel] Cloudflare API rate limit hit. Retry-After: 60s`
+
+### Disabling Auto-Mitigation
+
+Leave credentials empty in `wrangler.toml`:
+```toml
+[vars]
+CLOUDFLARE_API_TOKEN = ""
+CLOUDFLARE_ZONE_ID = ""
+```
+
+Sentinel will continue threat analysis and SOC alerting without IP blocking.
 
 ## Project Structure
 
