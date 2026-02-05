@@ -1,15 +1,13 @@
-# Sentinel
+# Sentinel AI
 
-**AI-powered security threat analysis at the edge**
+**An Edge-Native Agentic SOC for the Cloudflare Ecosystem**
 
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Workers AI](https://img.shields.io/badge/Workers%20AI-Llama%203.3--70b-F38020)](https://ai.cloudflare.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-36%20passing-success)](./tests/sentinel.test.ts)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../LICENSE)
 
-> **Cloudflare AI Internship Assignment** - See [ASSIGNMENT.md](./ASSIGNMENT.md) for requirements checklist and reviewer quick-start.
-
-Sentinel is a production-grade Cloudflare Workers application that uses AI to automatically classify and assess security threats in real-time. Built entirely on Cloudflare's edge infrastructure, it delivers sub-millisecond responses for known threats and intelligent analysis for unknown payloads—without managing servers.
+Sentinel AI is a production-grade autonomous security operations center (SOC) built on Cloudflare Workers. It uses AI to automatically detect, analyze, alert, and mitigate security threats in real-time at the edge. Built entirely on Cloudflare's infrastructure, it delivers sub-millisecond responses for known threats and intelligent analysis for unknown payloads—without managing servers.
 
 ## What It Does
 
@@ -584,17 +582,42 @@ For threat model and security architecture, see [ARCHITECTURE.md](./ARCHITECTURE
 
 ## Documentation
 
-### For Reviewers
-- **[ASSIGNMENT.md](./ASSIGNMENT.md)** –  **Start here!** Requirements checklist, quick-start guide, and design decisions
-
 ### Technical Documentation
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** – Deep dive into system design, Cloudflare API usage, and implementation details (758 lines)
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** – Deep dive into system design, Cloudflare API usage, and implementation details
 - **[PROMPTS.md](./PROMPTS.md)** – AI prompt engineering and response schemas
 - **[tests/sentinel.test.ts](./tests/sentinel.test.ts)** – Test suite with detailed comments (36 tests)
 
+### For Security Researchers
+
+Sentinel AI is designed for security professionals, researchers, and developers building edge-native security solutions. Key areas of interest:
+
+- **AI-Powered Threat Detection**: Explore how Llama 3.3-70b is used for real-time security analysis
+- **Durable Workflows**: Learn how Cloudflare Workflows enable reliable, retryable security automation
+- **Autonomous Response**: Study the risk-based escalation system (alerting at 80+, mitigation at 95+)
+- **Edge Architecture**: Understand how to build production-grade security systems without servers
+
+**Getting Started:**
+1. Review [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
+2. Examine [src/workflow.ts](../src/workflow.ts) for the 5-step security pipeline
+3. Check [src/prompts.ts](../src/prompts.ts) for AI prompt engineering techniques
+4. Deploy locally with `npm run dev` to experiment with threat detection
+
+**Contributing:**
+We welcome contributions from the security research community. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## Project Lead
+
+**Developed and maintained by Gianluca Binetti**
+
+Co-Technical Chair for the Society of Hispanic Professional Engineers (SHPE) at Florida Atlantic University. Focused on advancing edge-native AI security and automated threat response.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?logo=linkedin&logoColor=white)](https://linkedin.com/in/your-profile)
+
 ## License
 
-MIT
+Apache License 2.0
+
+See [LICENSE](../LICENSE) for full details.
 
 ---
 

@@ -1,6 +1,9 @@
 {
-  "name": "sentinel",
-  "version": "0.0.1",
+  "name": "sentinel-ai",
+  "version": "1.0.0",
+  "description": "An Edge-Native Agentic SOC for the Cloudflare Ecosystem",
+  "author": "Gianluca Binetti",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "deploy": "wrangler deploy",
@@ -14,5 +17,19 @@
     "typescript": "^5.0.0",
     "vitest": "^1.0.0",
     "wrangler": "^4.61.1"
+  },
+  "keywords": [
+    "security",
+    "ai",
+    "cloudflare",
+    "workers",
+    "soc",
+    "threat-detection",
+    "edge-computing",
+    "autonomous-security"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/sentinel-ai"
   }
 }
