@@ -132,6 +132,93 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             console.log(`[Sentinel] Analyzed ${cacheKey} -> ${assessment.action} (${assessment.attackType})`);
         });
 
+        // --- Step 4: SOC Alert Trigger ---
+        // Trigger external SOC platform alerts for high-risk threats.
+        // This step is isolated to prevent SOC webhook failures from blocking the workflow.
+        await step.do("trigger-soc-alert", async () => {
+            // Conditional logic: Only alert on block actions or high risk scores
+            const shouldAlert = assessment.action === "block" || assessment.riskScore > 80;
+
+            if (!shouldAlert) {
+                console.log(`[Sentinel] No SOC alert needed for ${cacheKey} (action: ${assessment.action}, risk: ${assessment.riskScore})`);
+                return;
+            }
+
+            // Check if SOC webhook is configured
+            if (!this.env.SOC_WEBHOOK_URL) {
+                console.log(`[Sentinel] SOC_WEBHOOK_URL not configured. Skipping alert for ${cacheKey}`);
+                return;
+            }
+
+            try {
+                // Determine alert severity based on risk score
+                let severity: "critical" | "high" | "medium" = "high";
+                if (assessment.riskScore >= 90) {
+                    severity = "critical";
+                } else if (assessment.riskScore >= 70) {
+                    severity = "high";
+                } else {
+                    severity = "medium";
+                }
+
+                // Construct SOC alert payload
+                const alertPayload = {
+                    alertId: `scan-${cacheKey}`,
+                    severity,
+                    source: "Sentinel AI Agent",
+                    timestamp: new Date().toISOString(),
+                    assessment: {
+                        attackType: assessment.attackType,
+                        confidence: assessment.confidence,
+                        riskScore: assessment.riskScore,
+                        action: assessment.action,
+                        explanation: assessment.explanation,
+                        impact: assessment.impact,
+                        mitigation: assessment.mitigation,
+                    },
+                    metadata: {
+                        cacheKey,
+                        originalTimestamp: assessment.timestamp,
+                    },
+                };
+
+                // Prepare request headers
+                const headers: Record<string, string> = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "Sentinel-AI-Agent/1.0",
+                };
+
+                // Add authentication if SOC_API_KEY is configured
+                if (this.env.SOC_API_KEY) {
+                    headers["Authorization"] = `Bearer ${this.env.SOC_API_KEY}`;
+                }
+
+                // Send POST request to SOC webhook
+                const response = await fetch(this.env.SOC_WEBHOOK_URL, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(alertPayload),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[Sentinel] SOC webhook failed (${response.status}): ${errorText}`);
+                    throw new Error(`SOC webhook returned ${response.status}`);
+                }
+
+                console.log(`[Sentinel] SOC alert triggered for ${cacheKey} (severity: ${severity})`);
+            } catch (error) {
+                // Non-blocking: Log error but don't fail the workflow
+                // The assessment has already been cached and will be returned
+                console.error(`[Sentinel] Failed to trigger SOC alert for ${cacheKey}:`, error);
+                
+                // In production, you might want to:
+                // 1. Store failed alerts in a dead-letter queue (DLQ)
+                // 2. Emit metrics to track webhook failure rates
+                // 3. Send fallback notifications (e.g., email, Slack)
+            }
+        });
+
         return assessment;
     }
 }

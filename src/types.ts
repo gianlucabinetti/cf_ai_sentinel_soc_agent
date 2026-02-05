@@ -8,6 +8,8 @@ export interface Env {
     SENTINEL_WORKFLOW: Workflow;
     ENVIRONMENT: 'production' | 'staging' | 'dev';
     API_KEY: string;
+    SOC_WEBHOOK_URL?: string; // Optional: SOC platform webhook endpoint
+    SOC_API_KEY?: string; // Optional: Authentication key for SOC webhook
 }
 
 // --- API Request/Response ---

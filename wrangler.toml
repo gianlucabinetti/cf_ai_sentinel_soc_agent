@@ -18,3 +18,36 @@ id = "9537df5b35e24bfd8fcd96b65c092ea4"
 # name = "sentinel-workflow"
 # binding = "SENTINEL_WORKFLOW"
 # class_name = "SentinelWorkflow"
+
+# --- SOC Integration Configuration ---
+# Configure these variables to enable SOC alert integration.
+# Alerts are triggered when action="block" OR riskScore > 80.
+#
+# Supported SOC Platforms:
+# - Microsoft Sentinel: https://docs.microsoft.com/azure/sentinel/
+# - Splunk HEC: https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector
+# - PagerDuty: https://developer.pagerduty.com/docs/events-api-v2/overview/
+# - Custom webhooks: Any endpoint accepting POST with JSON payload
+#
+# Example payload structure:
+# {
+#   "alertId": "scan-{hash}",
+#   "severity": "critical|high|medium",
+#   "source": "Sentinel AI Agent",
+#   "timestamp": "2026-02-04T12:00:00Z",
+#   "assessment": { ... }
+# }
+
+[vars]
+# SOC webhook endpoint (optional)
+# Example: "https://sentinel.azure.com/api/webhooks/your-endpoint"
+# Leave empty to disable SOC alerts
+SOC_WEBHOOK_URL = ""
+
+# For production, use secrets instead of vars for sensitive data:
+# Run: wrangler secret put SOC_API_KEY
+# Then remove the SOC_API_KEY line below
+#
+# SOC API authentication key (optional)
+# Example: "Bearer token" or API key depending on your SOC platform
+SOC_API_KEY = ""
