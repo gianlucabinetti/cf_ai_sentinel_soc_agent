@@ -63,6 +63,14 @@ class SentinelDashboard {
               <h1 class="text-3xl font-bold text-sentinel-accent">SENTINEL IPS</h1>
               <span class="text-xs text-gray-500 px-2 py-1 bg-sentinel-panel border border-sentinel-border rounded">v2.4.1</span>
             </div>
+            <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 mx-4">
+              <button id="view-live-btn" class="px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 bg-slate-800 text-emerald-400 shadow-sm">
+                Live Monitor
+              </button>
+              <button id="view-history-btn" class="px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 text-slate-400 hover:text-slate-200">
+                Audit Logs
+              </button>
+            </div>
             <button
               id="sandbox-toggle"
               class="text-sm text-gray-400 hover:text-sentinel-accent transition-colors px-4 py-2 border border-sentinel-border rounded-lg"
@@ -195,6 +203,8 @@ username=admin' OR '1'='1&password=test"
     const sandboxClose = document.getElementById('sandbox-close');
     const sandboxModal = document.getElementById('sandbox-modal');
     const analyzeBtn = document.getElementById('analyze-btn');
+    const viewLiveBtn = document.getElementById('view-live-btn');
+    const viewHistoryBtn = document.getElementById('view-history-btn');
 
     sandboxToggle?.addEventListener('click', () => {
       sandboxModal?.classList.remove('hidden');
@@ -207,6 +217,18 @@ username=admin' OR '1'='1&password=test"
     });
 
     analyzeBtn?.addEventListener('click', () => this.analyzeThreat());
+
+    viewLiveBtn?.addEventListener('click', () => {
+      // Toggle active state
+      viewLiveBtn.className = 'px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 bg-slate-800 text-emerald-400 shadow-sm';
+      viewHistoryBtn!.className = 'px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 text-slate-400 hover:text-slate-200';
+    });
+
+    viewHistoryBtn?.addEventListener('click', () => {
+      // Toggle active state
+      viewHistoryBtn.className = 'px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 bg-slate-800 text-emerald-400 shadow-sm';
+      viewLiveBtn!.className = 'px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 text-slate-400 hover:text-slate-200';
+    });
   }
 
   /**
