@@ -293,9 +293,13 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
         await step.do("mitigate-threat", async () => {
             const { sourceIP } = event.payload;
 
-            // Only mitigate critical threats (riskScore >= 95)
-            if (assessment.riskScore < 95) {
-                console.log(`[Sentinel] No auto-mitigation needed for ${cacheKey} (risk: ${assessment.riskScore})`);
+            // Track all high-risk threats (riskScore > 70) in KV
+            // Auto-block only critical threats (riskScore >= 95)
+            const shouldTrack = assessment.riskScore > 70;
+            const shouldBlock = assessment.riskScore >= 95;
+
+            if (!shouldTrack) {
+                console.log(`[Sentinel] No tracking needed for ${cacheKey} (risk: ${assessment.riskScore})`);
                 return;
             }
 
@@ -305,67 +309,75 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
                 return;
             }
 
-            // Check if Cloudflare API credentials are configured
-            if (!this.env.CLOUDFLARE_API_TOKEN || !this.env.CLOUDFLARE_ZONE_ID) {
-                console.log(`[Sentinel] Cloudflare API credentials not configured. Skipping auto-mitigation for ${cacheKey}`);
-                return;
+            // Calculate expiration time (1 hour from now)
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+            let ruleId: string | undefined = undefined;
+
+            // Only auto-block critical threats (>= 95)
+            if (shouldBlock) {
+                // Check if Cloudflare API credentials are configured
+                if (!this.env.CLOUDFLARE_API_TOKEN || !this.env.CLOUDFLARE_ZONE_ID) {
+                    console.log(`[Sentinel] Cloudflare API credentials not configured. Skipping auto-block for ${cacheKey}`);
+                } else {
+                    try {
+                        // Construct Cloudflare API request for IP Access Rule
+                        const apiUrl = `https://api.cloudflare.com/client/v4/zones/${this.env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules`;
+                        
+                        const rulePayload = {
+                            mode: "block",
+                            configuration: {
+                                target: "ip",
+                                value: sourceIP
+                            },
+                            notes: `Auto-blocked by Sentinel AI | Attack: ${assessment.attackType} | Risk: ${assessment.riskScore} | Cache: ${cacheKey} | Expires: ${expiresAt}`,
+                        };
+
+                        // Send POST request to Cloudflare API
+                        const response = await fetch(apiUrl, {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(rulePayload),
+                        });
+
+                        // Handle rate limiting (429) - let workflow retry with backoff
+                        if (response.status === 429) {
+                            const retryAfter = response.headers.get("Retry-After");
+                            console.warn(`[Sentinel] Cloudflare API rate limit hit. Retry-After: ${retryAfter}s`);
+                            throw new Error(`Rate limited by Cloudflare API (429). Retry after ${retryAfter}s`);
+                        }
+
+                        // Handle other errors
+                        if (!response.ok) {
+                            const errorBody = await response.text();
+                            console.error(`[Sentinel] Cloudflare API error (${response.status}): ${errorBody}`);
+                            throw new Error(`Cloudflare API returned ${response.status}: ${errorBody}`);
+                        }
+
+                        const result = await response.json();
+                        ruleId = (result as any).result?.id;
+
+                        console.log(`[Sentinel] Auto-mitigation: Blocked IP ${sourceIP} (Rule ID: ${ruleId}, Expires: ${expiresAt})`);
+
+                    } catch (error) {
+                        // Non-blocking: Log error but continue to store metadata
+                        console.error(`[Sentinel] Failed to auto-block ${sourceIP}:`, error);
+
+                        // If this is a rate limit error, re-throw to trigger workflow retry
+                        if (error instanceof Error && error.message.includes("429")) {
+                            throw error; // Workflow will retry with exponential backoff
+                        }
+                    }
+                }
             }
 
+            // Store mitigation metadata in KV for all high-risk threats (> 70)
+            // This enables the UI to display all tracked threats, not just blocked ones
             try {
-                // Calculate expiration time (1 hour from now)
-                const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-                // Construct Cloudflare API request for IP Access Rule
-                const apiUrl = `https://api.cloudflare.com/client/v4/zones/${this.env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules`;
-                
-                const rulePayload = {
-                    mode: "block",
-                    configuration: {
-                        target: "ip",
-                        value: sourceIP
-                    },
-                    notes: `Auto-blocked by Sentinel AI | Attack: ${assessment.attackType} | Risk: ${assessment.riskScore} | Cache: ${cacheKey} | Expires: ${expiresAt}`,
-                };
-
-                // Send POST request to Cloudflare API
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(rulePayload),
-                });
-
-                // Handle rate limiting (429) - let workflow retry with backoff
-                if (response.status === 429) {
-                    const retryAfter = response.headers.get("Retry-After");
-                    console.warn(`[Sentinel] Cloudflare API rate limit hit. Retry-After: ${retryAfter}s`);
-                    throw new Error(`Rate limited by Cloudflare API (429). Retry after ${retryAfter}s`);
-                }
-
-                // Handle other errors
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error(`[Sentinel] Cloudflare API error (${response.status}): ${errorBody}`);
-                    throw new Error(`Cloudflare API returned ${response.status}: ${errorBody}`);
-                }
-
-                const result = await response.json();
-                const ruleId = (result as any).result?.id;
-
-                console.log(`[Sentinel] Auto-mitigation: Blocked IP ${sourceIP} (Rule ID: ${ruleId}, Expires: ${expiresAt})`);
-
-                // Schedule automatic unblock after 1 hour
-                // Note: Cloudflare API doesn't support TTL on access rules directly.
-                // In production, you would:
-                // 1. Store rule ID in KV with 1-hour TTL
-                // 2. Use a Cron Trigger to periodically clean up expired rules
-                // 3. Or use Cloudflare WAF Custom Rules with time-based conditions
-
-                // Store rule metadata in KV for cleanup tracking
                 const ruleMetadata = {
-                    ruleId,
+                    ruleId: ruleId || "tracked-only", // "tracked-only" for non-blocked threats
                     sourceIP,
                     attackType: assessment.attackType,
                     riskScore: assessment.riskScore,
@@ -379,19 +391,12 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
                     { expirationTtl: 60 * 60 } // 1 hour TTL
                 );
 
-                console.log(`[Sentinel] Mitigation metadata stored for cleanup: ${sourceIP}`);
+                console.log(`[Sentinel] Mitigation metadata stored for ${sourceIP} (risk: ${assessment.riskScore}, blocked: ${shouldBlock})`);
 
             } catch (error) {
                 // Non-blocking: Log error but don't fail the workflow
-                // The assessment and alert have already been processed
-                console.error(`[Sentinel] Failed to auto-mitigate ${sourceIP}:`, error);
-
-                // If this is a rate limit error, re-throw to trigger workflow retry
-                if (error instanceof Error && error.message.includes("429")) {
-                    throw error; // Workflow will retry with exponential backoff
-                }
-
-                // For other errors, log and continue
+                console.error(`[Sentinel] Failed to store mitigation metadata for ${sourceIP}:`, error);
+                
                 // In production, you might want to:
                 // 1. Send fallback notification to SOC team
                 // 2. Emit metrics for mitigation failure rate

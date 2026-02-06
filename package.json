@@ -1,6 +1,6 @@
 {
   "name": "sentinel-ai",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "description": "An Edge-Native Agentic SOC for the Cloudflare Ecosystem",
   "author": "Gianluca Binetti",
   "license": "Apache-2.0",

@@ -1,4 +1,4 @@
-# Sentinel AI
+# Sentinel AI SOC Agent v2.2.0
 
 **An Edge-Native Agentic SOC for the Cloudflare Ecosystem**
 
@@ -11,6 +11,25 @@
 Sentinel AI is a production-grade autonomous security operations center (SOC) built on Cloudflare Workers. It uses AI to automatically detect, analyze, alert, and mitigate security threats in real-time at the edge. Built entirely on Cloudflare's infrastructure, it delivers sub-millisecond responses for known threats and intelligent analysis for unknown payloads—without managing servers.
 
 **OCSF-Compliant Alerts**: All security findings are formatted using the Open Cybersecurity Schema Framework (OCSF) Detection Finding class, ensuring seamless integration with enterprise SIEM platforms like Splunk and Microsoft Sentinel.
+
+## What's New in v2.2.0
+
+🎉 **Major UI/UX Overhaul**
+- **Class-Based Frontend Architecture**: Complete refactor of the dashboard using object-oriented design with `SentinelDashboard` class for robust state management
+- **Live Threat Feed**: Auto-refresh every 30 seconds with visual countdown timer for real-time monitoring
+- **API Status Indicator**: Glowing pulse indicator showing real-time connectivity (Online/Offline/Checking)
+- **Enhanced Executive Summary**: Markdown-like formatting with color-coded risk scores, confidence levels, and structured layout
+- **Status Badges**: Visual distinction between TRACKED (risk > 70) and BLOCKED (risk >= 95) threats
+
+🔧 **Backend Improvements**
+- **Durable KV Loop**: All threats with risk score > 70 are now tracked in KV, not just critical threats (>= 95)
+- **Granular Mitigation Tracking**: Separate tracking for monitored vs. auto-blocked threats
+- **Enhanced Logging**: Better visibility into threat tracking and mitigation decisions
+
+📦 **Developer Experience**
+- Improved type safety across all API boundaries
+- Better separation of concerns with class-based architecture
+- Enhanced error handling and graceful degradation
 
 ## What It Does
 
