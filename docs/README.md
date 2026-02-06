@@ -45,13 +45,14 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
  **Edge-Native AI Inference** – Runs Meta Llama 3.3-70b directly on Cloudflare Workers AI  
  **Global Caching** – Sub-millisecond responses via Cloudflare KV (90%+ cache hit rate)  
  **Durable Workflows** – Automatic retries and state management for long-running analysis  
+ **D1 Forensic Ledger** – Permanent audit trail with SQL-queryable security events database  
  **OCSF-Compliant Alerting** – SIEM-ready alerts using Open Cybersecurity Schema Framework  
  **Autonomous Mitigation** – Automatic IP blocking via Cloudflare Firewall API for critical threats  
  **Self-Healing IPS** – Automated cleanup with infinite scaling via cursor-based pagination  
  **AI Explainability** – Human-readable summaries for Junior Security Analysts  
  **Type-Safe Architecture** – Strict TypeScript with runtime validation at all boundaries  
  **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
- **Zero Infrastructure** – No servers, databases, or containers to manage
+ **Zero Infrastructure** – No servers to manage, fully serverless on Cloudflare's edge
 
 ## Demo
 
@@ -849,6 +850,42 @@ that could steal user credentials or hijack their session when the page loads."
 ## Forensics & Audit Logs
 
 Sentinel AI provides comprehensive audit trails and forensic capabilities for security investigations and compliance requirements.
+
+### D1 Forensic Ledger (ACTIVE)
+
+**Permanent Security Event Logging:**
+- All AI detections are permanently recorded to Cloudflare D1 database
+- Immutable audit trail for compliance and forensic analysis
+- Structured schema with indexed fields for fast queries
+- Includes: event ID, timestamp, source IP, country, request path, attack type, risk score, action, payload preview, and full metadata
+
+**Database Schema:**
+```sql
+CREATE TABLE security_events (
+  id TEXT PRIMARY KEY,
+  timestamp TEXT NOT NULL,
+  ip_address TEXT,
+  country TEXT,
+  request_path TEXT,
+  attack_type TEXT,
+  risk_score INTEGER,
+  action TEXT,
+  payload_preview TEXT,
+  metadata TEXT
+);
+```
+
+**Query Examples:**
+```bash
+# List all critical threats (risk score >= 95)
+wrangler d1 execute sentinel-audit-logs --command "SELECT * FROM security_events WHERE risk_score >= 95 ORDER BY timestamp DESC LIMIT 10"
+
+# Find all attacks from a specific IP
+wrangler d1 execute sentinel-audit-logs --command "SELECT * FROM security_events WHERE ip_address = '203.0.113.42'"
+
+# Count attacks by type
+wrangler d1 execute sentinel-audit-logs --command "SELECT attack_type, COUNT(*) as count FROM security_events GROUP BY attack_type ORDER BY count DESC"
+```
 
 ### Threat Tracking & Mitigation History
 

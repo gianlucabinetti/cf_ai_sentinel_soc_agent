@@ -1,11 +1,12 @@
 
-import { Ai, KVNamespace, Workflow } from "@cloudflare/workers-types";
+import { Ai, KVNamespace, Workflow, D1Database } from "@cloudflare/workers-types";
 
 // --- Environment Bindings ---
 export interface Env {
     AI: Ai;
     SENTINEL_KV: KVNamespace;
     SENTINEL_WORKFLOW: Workflow;
+    DB: D1Database; // D1 Database for forensic audit logging
     ENVIRONMENT: 'production' | 'staging' | 'dev';
     API_KEY: string;
     SOC_WEBHOOK_URL?: string; // Optional: SOC platform webhook endpoint

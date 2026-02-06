@@ -16,7 +16,7 @@ The **Brain** is the core intelligence layer currently implemented in v2.4.1:
 - **OCSF Alert Engine**: Structured SOC alerts to external SIEM platforms (ACTIVE)
 - **Autonomous Mitigation**: Automatic IP blocking via Cloudflare Firewall API (ACTIVE)
 - **Self-Healing IPS**: Automated cleanup with cursor-based pagination (ACTIVE)
-- **D1 Forensic Ledger**: Persistent threat intelligence storage (ROADMAP - v2.5)
+- **D1 Forensic Ledger**: Persistent threat intelligence storage (ACTIVE)
 
 ### The Fingers (Detection Agents)
 The **Fingers** are specialized **Detection Agents** that identify specific attack patterns.
@@ -281,7 +281,7 @@ We're building toward a fully autonomous, multi-node SOC platform. Here's what's
 - **ML Model Fine-Tuning**: Train on your own threat data
 
 ### Forensic Enhancements (v2.5+)
-- **D1 Forensic Ledger**: Persistent threat intelligence storage with SQL queries
+- **D1 Forensic Ledger**: Persistent threat intelligence storage with SQL queries (ACTIVE)
 - **R2 Archival**: Long-term storage of attack traces (90+ days)
 - **Incident Response Playbooks**: Automated mitigation workflows
 - **Threat Attribution**: Link attacks to known threat actors

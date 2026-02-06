@@ -13,6 +13,12 @@ binding = "AI"
 binding = "SENTINEL_KV"
 id = "9537df5b35e24bfd8fcd96b65c092ea4"
 
+# D1 Database binding for forensic audit logging
+[[d1_databases]]
+binding = "DB"
+database_name = "sentinel-audit-logs"
+database_id = "9795fd10-ea9b-408e-9502-e11aa193bce0"
+
 # Workflows binding - temporarily disabled for initial deployment
 # [[workflows]]
 # name = "sentinel-workflow"

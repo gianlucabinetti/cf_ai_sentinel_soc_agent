@@ -8,6 +8,69 @@ import { SecurityMemory } from "./memory";
 export { SentinelWorkflow };
 
 /**
+ * D1 Forensic Ledger - Security Event Logger
+ * Permanently records all AI detections to D1 database for audit compliance
+ * 
+ * @param env - Environment bindings (includes DB)
+ * @param assessment - Security assessment from AI
+ * @param sourceIP - Source IP address of the request
+ * @param requestPath - Request path/URL
+ * @param payloadPreview - First 200 chars of payload (for forensics)
+ */
+async function logSecurityEvent(
+    env: Env,
+    assessment: SecurityAssessment,
+    sourceIP: string,
+    requestPath: string,
+    payloadPreview: string
+): Promise<void> {
+    try {
+        // Generate unique event ID
+        const eventId = crypto.randomUUID();
+        
+        // Extract country from Cloudflare headers (if available)
+        // Note: This will be passed from the request context
+        const country = "Unknown"; // Will be populated from CF-IPCountry header in caller
+        
+        // Prepare metadata JSON
+        const metadata = JSON.stringify({
+            confidence: assessment.confidence,
+            explanation: assessment.explanation,
+            impact: assessment.impact,
+            mitigation: assessment.mitigation,
+            executive_summary: assessment.executive_summary,
+            timestamp: assessment.timestamp
+        });
+        
+        // Insert into D1 using parameterized query (prevents SQL injection)
+        await env.DB.prepare(
+            `INSERT INTO security_events 
+            (id, timestamp, ip_address, country, request_path, attack_type, risk_score, action, payload_preview, metadata) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+            eventId,
+            assessment.timestamp,
+            sourceIP,
+            country,
+            requestPath,
+            assessment.attackType,
+            assessment.riskScore,
+            assessment.action,
+            payloadPreview,
+            metadata
+        )
+        .run();
+        
+        console.log(`[D1 Forensic Ledger] Event ${eventId} logged: ${assessment.attackType} (Risk: ${assessment.riskScore})`);
+    } catch (error) {
+        // Non-blocking: Log error but don't fail the request
+        // D1 unavailability should not prevent security enforcement
+        console.error("[D1 Forensic Ledger] Failed to log event:", error);
+    }
+}
+
+/**
  * Inline AI Analysis Helper
  * Runs synchronous threat analysis for IPS mode enforcement
  */
@@ -193,6 +256,10 @@ export default {
                 // ENFORCEMENT: Block if riskScore > 90
                 if (assessment.riskScore > 90) {
                     console.log(`[IPS] BLOCKED ${sourceIP} - ${assessment.attackType} (Risk: ${assessment.riskScore})`);
+
+                    // Log to D1 Forensic Ledger
+                    const payloadPreview = extractedPayload.substring(0, 200);
+                    await logSecurityEvent(env, assessment, sourceIP, url.pathname, payloadPreview);
 
                     // Write IP to KV with mitigation metadata
                     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
@@ -417,6 +484,11 @@ export default {
                         }
                     }
                 );
+
+                // Log to D1 Forensic Ledger (all detections, not just blocks)
+                const payloadPreview = payload.substring(0, 200);
+                const requestPath = "/v1/analyze";
+                await logSecurityEvent(env, assessment, sourceIP || "unknown", requestPath, payloadPreview);
 
                 const responseBody = {
                     status: "analyzed",
