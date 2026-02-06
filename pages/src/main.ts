@@ -126,7 +126,7 @@ class SentinelDashboard {
           </div>
 
           <!-- Threat Stream Table -->
-          <div class="overflow-x-auto">
+          <div crlass="overflow-x-auto">
             <div id="threat-stream-container">
               <!-- Loading state -->
               <div class="text-center text-gray-500 py-12">
