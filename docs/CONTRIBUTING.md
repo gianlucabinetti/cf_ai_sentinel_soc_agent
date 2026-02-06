@@ -4,7 +4,7 @@ Welcome to **Sentinel AI** — a **Community-Driven Edge Security Platform** bui
 
 ---
 
-## 🧠 The HAND Architecture
+##  The HAND Architecture
 
 Sentinel AI is designed around the **HAND** (Hierarchical Autonomous Network Defense) architecture:
 
@@ -32,7 +32,7 @@ The **Fingers** are specialized **Detection Agents** that identify specific atta
 
 ---
 
-## 🏗️ Built on Iron
+##  Built on Iron
 
 Sentinel AI is developed and tested on a **Dell PowerEdge R610 Proxmox cluster** to ensure:
 - **Enterprise-grade stability** under load
@@ -44,7 +44,7 @@ This isn't a toy project. We're building production-ready security infrastructur
 
 ---
 
-## 🎯 Contributor Tiers
+##  Contributor Tiers
 
 We welcome contributors at all skill levels. Choose your tier:
 
@@ -80,7 +80,7 @@ Using Unicode normalization to bypass SQL injection filters:
 \u0053\u0045\u004C\u0045\u0043\u0054 * FROM users
 
 ## Current Detection Status
-❌ Not detected by current SQLi Agent
+ Not detected by current SQLi Agent
 
 ## Recommended Mitigation
 Add Unicode normalization to sanitization step before AI inference.
@@ -157,7 +157,7 @@ export class CSRFAgent implements DetectionAgent {
 
 ---
 
-## 📋 PR Guidelines
+##  PR Guidelines
 
 We maintain strict quality standards to ensure Sentinel AI remains production-ready.
 
@@ -228,7 +228,7 @@ Tested against 500 SSRF payloads with 0% FPR.
 
 ---
 
-## 🚀 Roadmap to v2.5
+##  Roadmap to v2.5
 
 We're building toward a fully autonomous, multi-node SOC platform. Here's what's coming:
 
@@ -259,7 +259,7 @@ We're building toward a fully autonomous, multi-node SOC platform. Here's what's
 
 ---
 
-## 🛠️ Development Setup
+##  Development Setup
 
 ### Prerequisites
 - Node.js 18+
@@ -326,7 +326,7 @@ const agents = [
 
 ---
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### What We Test
 - **Type Guards**: Runtime validation of AI responses
@@ -361,7 +361,7 @@ npm test tests/agents/sqli-agent.test.ts
 
 ---
 
-## 🔒 Security Best Practices
+##  Security Best Practices
 
 ### Code Review Checklist
 - [ ] No raw payloads logged (only hashes)
@@ -381,7 +381,7 @@ When building a new Detection Agent, consider:
 
 ---
 
-## 📚 Documentation Standards
+##  Documentation Standards
 
 ### Required Documentation
 - **Agent README**: Explain what the agent detects and how
@@ -410,7 +410,7 @@ docs/
 
 ---
 
-## 🌍 Community
+##  Community
 
 ### Communication Channels
 - **GitHub Discussions**: Feature requests, architecture debates
@@ -432,7 +432,7 @@ Top contributors will be:
 
 ---
 
-## 🐛 Reporting Security Vulnerabilities
+##  Reporting Security Vulnerabilities
 
 If you discover a security vulnerability in Sentinel AI:
 
@@ -448,13 +448,13 @@ We'll respond within 48 hours and work with you on a fix.
 
 ---
 
-## 📄 License
+##  License
 
 Sentinel AI is licensed under the **Apache License 2.0**. By contributing, you agree that your contributions will be licensed under the same license.
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 Sentinel AI is built on the shoulders of giants:
 - **Cloudflare Workers**: Edge computing platform
@@ -464,7 +464,7 @@ Sentinel AI is built on the shoulders of giants:
 
 ---
 
-## 🚀 Ready to Contribute?
+##  Ready to Contribute?
 
 1. **Fork the repository**
 2. **Pick an issue** from the [Good First Issue](https://github.com/yourusername/sentinel-ai/labels/good%20first%20issue) label
