@@ -38,3 +38,22 @@ export interface MitigationsResponse {
 export interface AnalyzeRequest {
     payload: string;
 }
+
+// Telemetry Types
+
+export type SystemStatus = 'online' | 'offline' | 'checking';
+
+export interface TelemetryData {
+    systemStatus: SystemStatus;
+    latency: number;
+    activeRules: number;
+    totalBlocks: number;
+}
+
+export interface ThreatStreamEntry {
+    timestamp: string;
+    sourceIP: string;
+    attackVector: string;
+    riskScore: number;
+    action: 'BLOCKED' | 'ALLOWED' | 'FLAGGED';
+}

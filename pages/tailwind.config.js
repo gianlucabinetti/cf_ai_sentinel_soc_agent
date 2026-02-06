@@ -9,12 +9,12 @@ export default {
     extend: {
       colors: {
         'sentinel': {
-          bg: '#0a0e1a',
-          panel: '#0f1419',
-          border: '#1e293b',
-          accent: '#00ff41',
-          'accent-dim': '#00cc33',
-          danger: '#ef4444',
+          bg: '#0f172a',
+          panel: '#1e293b',
+          border: '#334155',
+          accent: '#10b981',
+          'accent-dim': '#059669',
+          danger: '#f43f5e',
           warning: '#f59e0b',
           success: '#10b981',
         }
