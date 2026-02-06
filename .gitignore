@@ -6,6 +6,11 @@ node_modules/
 .dev.vars
 .env
 
+# Pages Environment Variables (NEVER commit production URLs)
+pages/.env
+pages/.env.production
+pages/.env.local
+
 # Build outputs
 dist/
 .cache/

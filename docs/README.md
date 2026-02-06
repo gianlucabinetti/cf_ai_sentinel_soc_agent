@@ -148,13 +148,24 @@ Sentinel includes a minimal web-based triage console built with Cloudflare Pages
    ```
    Note your Worker URL (e.g., `https://sentinel-agent.workers.dev`)
 
-2. **Deploy the Pages frontend:**
+2. **Configure the Frontend Environment:**
+   ```bash
+   cd pages
+   # Copy the example environment file
+   cp .env.example .env.production
+   # Edit .env.production and set your Worker URL
+   # VITE_API_URL=https://your-worker-name.workers.dev
+   ```
+   
+   **Important:** The `.env.production` file is gitignored to prevent hardcoding your personal Worker URL in the repository.
+
+3. **Deploy the Pages frontend:**
    ```bash
    cd pages
    npx wrangler pages deploy . --project-name=sentinel-ui
    ```
 
-3. **Connect Pages to the Worker:**
+4. **Connect Pages to the Worker:**
    
    In the Cloudflare dashboard:
    - Go to **Workers & Pages** → **sentinel-ui** → **Settings** → **Functions**
@@ -172,7 +183,7 @@ Sentinel includes a minimal web-based triage console built with Cloudflare Pages
    ```
    Then redeploy. This routes `/v1/*` requests to your Worker.
 
-4. **Access the UI:**
+5. **Access the UI:**
    Open `https://sentinel-ui.pages.dev` in your browser
 
 ### How It Works
