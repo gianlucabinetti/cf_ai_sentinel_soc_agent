@@ -14,19 +14,19 @@ Sentinel AI is a production-grade autonomous security operations center (SOC) bu
 
 ## What's New in v2.2.0
 
-🎉 **Major UI/UX Overhaul**
+ **Major UI/UX Overhaul**
 - **Class-Based Frontend Architecture**: Complete refactor of the dashboard using object-oriented design with `SentinelDashboard` class for robust state management
 - **Live Threat Feed**: Auto-refresh every 30 seconds with visual countdown timer for real-time monitoring
 - **API Status Indicator**: Glowing pulse indicator showing real-time connectivity (Online/Offline/Checking)
 - **Enhanced Executive Summary**: Markdown-like formatting with color-coded risk scores, confidence levels, and structured layout
 - **Status Badges**: Visual distinction between TRACKED (risk > 70) and BLOCKED (risk >= 95) threats
 
-🔧 **Backend Improvements**
+ **Backend Improvements**
 - **Durable KV Loop**: All threats with risk score > 70 are now tracked in KV, not just critical threats (>= 95)
 - **Granular Mitigation Tracking**: Separate tracking for monitored vs. auto-blocked threats
 - **Enhanced Logging**: Better visibility into threat tracking and mitigation decisions
 
-📦 **Developer Experience**
+ **Developer Experience**
 - Improved type safety across all API boundaries
 - Better separation of concerns with class-based architecture
 - Enhanced error handling and graceful degradation
