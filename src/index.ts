@@ -558,8 +558,3 @@ export default {
         }
     },
 };
-ror) {
-            console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
-        }
-    },
-};

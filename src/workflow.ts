@@ -396,16 +396,3 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
         return assessment;
     }
 }
- rate
-                // 3. Store failed mitigation attempts for manual review
-            }
-        });
-
-        return assessment;
-    }
-}
-  }
-}
-}
-  }
-}
