@@ -228,7 +228,6 @@ export default {
                 }
 
                 // PASS-THROUGH: Low risk, allow request
-                console.log(`[IPS] ALLOWED ${sourceIP} - ${assessment.attackType} (Risk: ${assessment.riskScore})`);
                 return new Response("Welcome to the Protected Origin", {
                     status: 200,
                     headers: { "Content-Type": "text/plain", ...corsHeaders }
@@ -469,8 +468,6 @@ export default {
         env: Env,
         ctx: ExecutionContext
     ): Promise<void> {
-        console.log(`[Sentinel Cleanup] Starting self-healing cleanup at ${new Date().toISOString()}`);
-
         try {
             let cleanedCount = 0;
             let errorCount = 0;
@@ -504,7 +501,6 @@ export default {
                         // Get mitigation metadata
                         const metadataStr = await env.SENTINEL_KV.get(key.name);
                         if (!metadataStr) {
-                            console.log(`[Sentinel Cleanup] No metadata found for ${key.name}, skipping`);
                             continue;
                         }
 
@@ -539,8 +535,6 @@ export default {
                                     console.error(`[Sentinel Cleanup] Failed to delete rule ${metadata.ruleId}: ${response.status} ${errorText}`);
                                     errorCount++;
                                 }
-                            } else {
-                                console.log(`[Sentinel Cleanup] Cloudflare API not configured, skipping rule deletion for ${metadata.sourceIP}`);
                             }
 
                             // Delete metadata from KV (cleanup even if API call failed)
@@ -558,13 +552,13 @@ export default {
                 // Update cursor for next iteration (only exists if list_complete is false)
                 cursor = listComplete ? undefined : (listResult as any).cursor;
 
-                console.log(`[Sentinel Cleanup] Batch ${batchNumber} complete: ${batchSize} keys processed, list_complete: ${listComplete}`);
-
             } while (!listComplete); // Continue while there are more pages
-
-            // Final summary log showing total across all paginated batches
-            console.log(`[Sentinel Cleanup]  Cleanup complete: ${cleanedCount} rules deleted, ${errorCount} errors, ${totalKeysScanned} total keys scanned across ${batchNumber} batches`);
         } catch (error) {
+            console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
+        }
+    },
+};
+ror) {
             console.error(`[Sentinel Cleanup] Fatal error during cleanup:`, error);
         }
     },

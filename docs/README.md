@@ -1,4 +1,4 @@
-# Sentinel AI SOC Agent v2.2.0
+# Sentinel AI SOC Agent v2.4.1
 
 **An Edge-Native Agentic SOC for the Cloudflare Ecosystem**
 
@@ -12,24 +12,23 @@ Sentinel AI is a production-grade autonomous security operations center (SOC) bu
 
 **OCSF-Compliant Alerts**: All security findings are formatted using the Open Cybersecurity Schema Framework (OCSF) Detection Finding class, ensuring seamless integration with enterprise SIEM platforms like Splunk and Microsoft Sentinel.
 
-## What's New in v2.2.0
+## What's New in v2.4.1
 
- **Major UI/UX Overhaul**
+ **Code Quality & Production Readiness**
+- **Gold Master Release**: Final code quality audit with strict production standards
+- **Cleaned Logging**: Removed all debug console.log statements (retained console.error for error handling)
+- **Version Synchronization**: Consistent v2.4.1 across all package.json files and UI badges
+- **Documentation Updates**: Enhanced README with Forensics/Audit Log section
+- **Environment Security**: Verified .gitignore protection for sensitive configuration files
+
+ **Previous Updates (v2.2.0)**
 - **Class-Based Frontend Architecture**: Complete refactor of the dashboard using object-oriented design with `SentinelDashboard` class for robust state management
-- **Live Threat Feed**: Auto-refresh every 30 seconds with visual countdown timer for real-time monitoring
+- **Live Threat Feed**: Auto-refresh every 5 seconds with real-time monitoring
 - **API Status Indicator**: Glowing pulse indicator showing real-time connectivity (Online/Offline/Checking)
 - **Enhanced Executive Summary**: Markdown-like formatting with color-coded risk scores, confidence levels, and structured layout
 - **Status Badges**: Visual distinction between TRACKED (risk > 70) and BLOCKED (risk >= 95) threats
-
- **Backend Improvements**
 - **Durable KV Loop**: All threats with risk score > 70 are now tracked in KV, not just critical threats (>= 95)
 - **Granular Mitigation Tracking**: Separate tracking for monitored vs. auto-blocked threats
-- **Enhanced Logging**: Better visibility into threat tracking and mitigation decisions
-
- **Developer Experience**
-- Improved type safety across all API boundaries
-- Better separation of concerns with class-based architecture
-- Enhanced error handling and graceful degradation
 
 ## What It Does
 
@@ -845,6 +844,122 @@ that could steal user credentials or hijack their session when the page loads."
     ...
   }
 }
+```
+
+## Forensics & Audit Logs
+
+Sentinel AI provides comprehensive audit trails and forensic capabilities for security investigations and compliance requirements.
+
+### Threat Tracking & Mitigation History
+
+**KV-Based Audit Trail:**
+- All threats with risk score > 70 are automatically tracked in Cloudflare KV
+- Mitigation metadata includes: source IP, attack type, risk score, timestamps, rule IDs
+- 1-hour retention for active mitigations (configurable via TTL)
+- Accessible via `/v1/mitigations` API endpoint
+
+**Mitigation Records Structure:**
+```json
+{
+  "ruleId": "ips-blocked",
+  "sourceIP": "203.0.113.42",
+  "attackType": "SQLi",
+  "riskScore": 95,
+  "createdAt": "2026-02-05T10:30:00Z",
+  "expiresAt": "2026-02-05T11:30:00Z",
+  "timeRemaining": "45m"
+}
+```
+
+### Real-Time Monitoring
+
+**Live Threat Stream:**
+- Dashboard displays all active mitigations in real-time
+- Auto-refresh every 5 seconds for continuous monitoring
+- Visual risk score indicators and action badges (BLOCKED/FLAGGED)
+- Sortable by timestamp, IP address, attack type, or risk score
+
+**API Access:**
+```bash
+# List all active mitigations
+curl https://your-worker.workers.dev/v1/mitigations
+
+# Response includes count and detailed mitigation records
+{
+  "success": true,
+  "count": 12,
+  "mitigations": [...]
+}
+```
+
+### Forensic Analysis Capabilities
+
+**Cached Assessments:**
+- All AI security assessments are cached in KV for 72 hours
+- Enables post-incident analysis and pattern recognition
+- Deduplication prevents re-analysis of identical payloads
+- Cache keys are SHA-256 hashes for deterministic lookups
+
+**OCSF-Compliant Logging:**
+- All SOC alerts follow Open Cybersecurity Schema Framework (OCSF) Detection Finding class
+- Structured JSON format for SIEM integration (Splunk, Microsoft Sentinel, etc.)
+- Includes observables, remediation steps, and raw assessment data
+- Severity mapping: Informational (1) → Fatal (6)
+
+**Self-Healing Cleanup:**
+- Automated cron job runs every 30 minutes
+- Removes expired IP blocks from Cloudflare Firewall
+- Cursor-based pagination supports infinite scaling (1,000+ mitigations)
+- Audit trail of cleanup operations in Worker logs
+
+### Compliance & Retention
+
+**Data Retention Policies:**
+- **Active Mitigations**: 1 hour (auto-cleanup via cron)
+- **Cached Assessments**: 72 hours (KV TTL)
+- **SOC Alerts**: Permanent (stored in external SIEM)
+- **Worker Logs**: 24 hours (Cloudflare default, extendable via Logpush)
+
+**Privacy Considerations:**
+- Raw payloads are NOT stored in KV (only SHA-256 hashes)
+- Mitigation metadata includes only IP addresses and attack classifications
+- No PII or sensitive data is cached
+- Compliant with GDPR and data minimization principles
+
+**Audit Trail Access:**
+```bash
+# View Worker logs (last 24 hours)
+wrangler tail
+
+# Export logs to external storage (R2, S3, etc.)
+wrangler tail --format json > audit_log.json
+
+# Query specific mitigation by IP
+curl https://your-worker.workers.dev/v1/mitigations | jq '.mitigations[] | select(.sourceIP=="203.0.113.42")'
+```
+
+### Investigation Workflow
+
+**Post-Incident Analysis:**
+1. **Identify Attack**: Check `/v1/mitigations` for active blocks
+2. **Review Assessment**: Retrieve cached analysis via cache key
+3. **Correlate Events**: Cross-reference with SOC alerts in SIEM
+4. **Validate Response**: Verify Cloudflare Firewall rules were applied
+5. **Document Findings**: Export audit logs for compliance reporting
+
+**Example Investigation:**
+```bash
+# Step 1: List recent mitigations
+curl https://your-worker.workers.dev/v1/mitigations
+
+# Step 2: Check Cloudflare Firewall rules
+# Dashboard → Security → WAF → Tools → IP Access Rules
+
+# Step 3: Review Worker logs for detailed timeline
+wrangler tail --format pretty
+
+# Step 4: Query SIEM for correlated alerts
+# (Platform-specific: Splunk, Sentinel, etc.)
 ```
 
 ## Project Structure

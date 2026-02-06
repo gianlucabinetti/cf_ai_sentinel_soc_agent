@@ -61,7 +61,7 @@ class SentinelDashboard {
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <h1 class="text-3xl font-bold text-sentinel-accent">SENTINEL IPS</h1>
-              <span class="text-xs text-gray-500 px-2 py-1 bg-sentinel-panel border border-sentinel-border rounded">v2.2.0</span>
+              <span class="text-xs text-gray-500 px-2 py-1 bg-sentinel-panel border border-sentinel-border rounded">v2.4.1</span>
             </div>
             <button
               id="sandbox-toggle"

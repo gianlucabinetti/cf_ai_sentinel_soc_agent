@@ -102,7 +102,6 @@ export class SecurityMemory {
         try {
             const key = `${SecurityMemory.KEY_PREFIX}${cacheKey}`;
             await this.kv.delete(key);
-            console.log(`[SecurityMemory] Invalidated cache for ${cacheKey}`);
         } catch (error) {
             console.error(`[SecurityMemory] Failed to invalidate ${cacheKey}:`, error);
         }

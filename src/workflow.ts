@@ -123,13 +123,7 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             if (assessment.attackType !== "System Failure") {
                 const memory = new SecurityMemory(this.env);
                 await memory.storeAssessment(cacheKey, assessment);
-                console.log(`[Sentinel] Cached ${cacheKey}`);
-            } else {
-                console.log(`[Sentinel] Skipped caching for System Failure: ${cacheKey}`);
             }
-
-            // In production, you would also emit to extensive logging here (e.g. R2, Axiom, Datadog)
-            console.log(`[Sentinel] Analyzed ${cacheKey} -> ${assessment.action} (${assessment.attackType})`);
         });
 
         // --- Step 4: SOC Alert Trigger ---
@@ -299,7 +293,6 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             const shouldBlock = assessment.riskScore >= 95;
 
             if (!shouldTrack) {
-                console.log(`[Sentinel] No tracking needed for ${cacheKey} (risk: ${assessment.riskScore})`);
                 return;
             }
 
@@ -316,9 +309,7 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
             // Only auto-block critical threats (>= 95)
             if (shouldBlock) {
                 // Check if Cloudflare API credentials are configured
-                if (!this.env.CLOUDFLARE_API_TOKEN || !this.env.CLOUDFLARE_ZONE_ID) {
-                    console.log(`[Sentinel] Cloudflare API credentials not configured. Skipping auto-block for ${cacheKey}`);
-                } else {
+                if (this.env.CLOUDFLARE_API_TOKEN && this.env.CLOUDFLARE_ZONE_ID) {
                     try {
                         // Construct Cloudflare API request for IP Access Rule
                         const apiUrl = `https://api.cloudflare.com/client/v4/zones/${this.env.CLOUDFLARE_ZONE_ID}/firewall/access_rules/rules`;
@@ -391,8 +382,6 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
                     { expirationTtl: 60 * 60 } // 1 hour TTL
                 );
 
-                console.log(`[Sentinel] Mitigation metadata stored for ${sourceIP} (risk: ${assessment.riskScore}, blocked: ${shouldBlock})`);
-
             } catch (error) {
                 // Non-blocking: Log error but don't fail the workflow
                 console.error(`[Sentinel] Failed to store mitigation metadata for ${sourceIP}:`, error);
@@ -406,4 +395,17 @@ export class SentinelWorkflow extends WorkflowEntrypoint<Env, WorkflowParams> {
 
         return assessment;
     }
+}
+ rate
+                // 3. Store failed mitigation attempts for manual review
+            }
+        });
+
+        return assessment;
+    }
+}
+  }
+}
+}
+  }
 }
