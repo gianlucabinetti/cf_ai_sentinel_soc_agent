@@ -8,17 +8,27 @@ Welcome to **Sentinel AI** — a **Community-Driven Edge Security Platform** bui
 
 Sentinel AI is designed around the **HAND** (Hierarchical Autonomous Network Defense) architecture:
 
-### The Brain
-The **Brain** is the core intelligence layer:
-- **D1 Forensic Database**: Persistent threat intelligence storage
-- **AI Inference Engine**: Llama 3.3-70b for real-time threat analysis
-- **Workflow Orchestrator**: Durable execution with automatic retries
-- **Memory Layer**: KV-based caching for sub-millisecond responses
+### The Brain (Core Features)
+The **Brain** is the core intelligence layer currently implemented in v2.4.1:
+- **AI Inference Engine**: Llama 3.3-70b for real-time threat analysis (ACTIVE)
+- **Workflow Orchestrator**: Durable execution with automatic retries (ACTIVE)
+- **Memory Layer**: KV-based caching for sub-millisecond responses (ACTIVE)
+- **OCSF Alert Engine**: Structured SOC alerts to external SIEM platforms (ACTIVE)
+- **Autonomous Mitigation**: Automatic IP blocking via Cloudflare Firewall API (ACTIVE)
+- **Self-Healing IPS**: Automated cleanup with cursor-based pagination (ACTIVE)
+- **D1 Forensic Ledger**: Persistent threat intelligence storage (ROADMAP - v2.5)
 
-### The Fingers
-The **Fingers** are specialized **Detection Agents** that identify specific attack patterns:
-- **SQLi Agent**: SQL injection detection
-- **XSS Agent**: Cross-site scripting analysis
+### The Fingers (Detection Agents)
+The **Fingers** are specialized **Detection Agents** that identify specific attack patterns.
+
+**Current Implementation (v2.4.1):**
+- **Unified AI Model**: All threat detection is currently handled by a single Llama 3.3-70b model via prompt engineering
+- **Detected Threats**: SQLi, XSS, Command Injection, Path Traversal, CSRF, SSRF, XXE, Deserialization, LDAP Injection, NoSQL Injection
+
+**Roadmap (v2.5+):**
+Build specialized Detection Agents as separate modules:
+- **SQLi Agent**: SQL injection detection with pattern matching
+- **XSS Agent**: Cross-site scripting analysis with DOM parsing
 - **CSRF Agent**: Cross-site request forgery detection
 - **Path Traversal Agent**: Directory traversal attacks
 - **Command Injection Agent**: OS command injection patterns
@@ -28,19 +38,31 @@ The **Fingers** are specialized **Detection Agents** that identify specific atta
 - **LDAP Injection Agent**: LDAP query manipulation
 - **NoSQL Injection Agent**: NoSQL database attacks
 
-**Your Mission**: Build new Fingers to detect emerging threats from the **OWASP Top 10** and beyond.
+**Your Mission**: Build new Fingers to detect emerging threats from the **OWASP Top 10** and beyond. Each agent will operate independently and feed results to the Brain for correlation and decision-making.
 
 ---
 
 ##  Built on Iron
 
-Sentinel AI is developed and tested on a **Dell PowerEdge R610 Proxmox cluster** to ensure:
-- **Enterprise-grade stability** under load
-- **Multi-node resilience** testing
+Sentinel AI leverages a dual-environment architecture for maximum reliability:
+
+### Validation & Stress-Testing Lab
+**Dell PowerEdge R610 Proxmox Cluster** (Development & QA):
+- **Enterprise-grade stability** testing under load
+- **Multi-node resilience** validation
 - **Real-world performance** benchmarks
 - **Hardware-level security** validation
+- **Pre-production integration** testing
 
-This isn't a toy project. We're building production-ready security infrastructure.
+### Global Edge Production
+**Cloudflare Workers** (Production Deployment):
+- **300+ edge locations** worldwide
+- **Zero cold starts** with instant scaling
+- **Sub-millisecond latency** for cached threats
+- **Infinite horizontal scaling** without infrastructure management
+- **Built-in DDoS protection** and WAF integration
+
+This dual-environment approach ensures Sentinel AI is battle-tested on real hardware before deploying to Cloudflare's global edge network. We're building production-ready security infrastructure, not toy projects.
 
 ---
 
@@ -232,30 +254,38 @@ Tested against 500 SSRF payloads with 0% FPR.
 
 We're building toward a fully autonomous, multi-node SOC platform. Here's what's coming:
 
-### Webhook Integrations
-- **Slack Alerts**: Real-time threat notifications to SOC channels
-- **Discord Webhooks**: Community-driven threat intelligence sharing
-- **PagerDuty Integration**: Critical alert escalation
-- **Microsoft Sentinel**: Enterprise SIEM integration
-- **Splunk HEC**: Log aggregation and correlation
+### Webhook Integrations (ACTIVE in v2.4.1)
+-  **Microsoft Sentinel**: Enterprise SIEM integration (OCSF-compliant)
+-  **Splunk HEC**: Log aggregation and correlation
+-  **PagerDuty Integration**: Critical alert escalation
+-  **Custom Webhooks**: Any SOC platform accepting JSON POST
+- **Slack Alerts**: Real-time threat notifications to SOC channels (ROADMAP)
+- **Discord Webhooks**: Community-driven threat intelligence sharing (ROADMAP)
 
-### Multi-Node Clusters
+### Detection Agent Architecture (v2.5)
+- **Modular Finger Agents**: Separate detection modules for each threat type
+- **Parallel Analysis**: Run multiple agents concurrently for faster detection
+- **Agent Marketplace**: Community-contributed detection agents
+- **Custom Agent SDK**: Build your own detection logic
+
+### Multi-Node Clusters (v2.5+)
 - **Distributed Threat Intelligence**: Share detections across edge nodes
 - **Consensus-Based Blocking**: Multi-node voting for high-confidence blocks
 - **Geo-Distributed Forensics**: Regional threat pattern analysis
 - **Failover and Redundancy**: Zero-downtime security operations
 
-### Advanced Detection
+### Advanced Detection (v2.5+)
 - **Behavioral Analysis**: Detect anomalies using historical baselines
 - **Threat Hunting Workflows**: Proactive investigation tools
 - **Custom Rule Engine**: User-defined detection logic
 - **ML Model Fine-Tuning**: Train on your own threat data
 
-### Forensic Enhancements
-- **D1 Query Interface**: SQL-based threat intelligence queries
-- **R2 Archival**: Long-term storage of attack traces
+### Forensic Enhancements (v2.5+)
+- **D1 Forensic Ledger**: Persistent threat intelligence storage with SQL queries
+- **R2 Archival**: Long-term storage of attack traces (90+ days)
 - **Incident Response Playbooks**: Automated mitigation workflows
 - **Threat Attribution**: Link attacks to known threat actors
+- **Timeline Reconstruction**: Visualize attack chains and lateral movement
 
 ---
 
@@ -275,6 +305,10 @@ cd sentinel-ai
 # Install dependencies
 npm install
 
+# Create KV namespace for caching
+wrangler kv:namespace create SENTINEL_KV
+# Copy the returned namespace ID and update wrangler.toml
+
 # Generate Cloudflare types
 npm run cf-typegen
 
@@ -288,10 +322,39 @@ npm run dev
 npm run deploy
 ```
 
-### Creating a New Detection Agent
-
-1. **Create the agent file**:
+### Frontend Setup (Dashboard UI)
 ```bash
+# Navigate to pages directory
+cd pages
+
+# Install frontend dependencies
+npm install
+
+# Configure API endpoint
+cp .env.example .env.production
+# Edit .env.production and set VITE_API_URL to your Worker URL
+# Example: VITE_API_URL=https://sentinel-agent.your-subdomain.workers.dev
+
+# Start local development server
+npm run dev
+# Access at http://localhost:5173
+
+# Build for production
+npm run build
+
+# Deploy to Cloudflare Pages
+npx wrangler pages deploy dist --project-name=sentinel-ai-dashboard
+```
+
+**Important**: The `.env.production` file is gitignored to prevent hardcoding personal Worker URLs in the repository. Always configure this file locally before deploying.
+
+### Creating a New Detection Agent (v2.5 Roadmap)
+
+**Note**: Detection Agents are planned for v2.5. Currently (v2.4.1), all threat detection is handled by the unified AI model. This section describes the future architecture.
+
+1. **Create the agent directory structure**:
+```bash
+mkdir -p src/agents
 touch src/agents/your-agent.ts
 ```
 
@@ -302,12 +365,14 @@ import { DetectionAgent, ThreatAssessment } from "../types";
 export class YourAgent implements DetectionAgent {
   async analyze(payload: string): Promise<ThreatAssessment> {
     // Your detection logic here
+    // Example: Pattern matching, regex, or specialized AI prompts
   }
 }
 ```
 
-3. **Write tests**:
+3. **Write comprehensive tests**:
 ```bash
+mkdir -p tests/agents
 touch tests/agents/your-agent.test.ts
 ```
 
@@ -316,13 +381,16 @@ touch tests/agents/your-agent.test.ts
 import { YourAgent } from "./agents/your-agent";
 
 const agents = [
-  new SQLiAgent(),
-  new XSSAgent(),
   new YourAgent(), // Add your agent
 ];
+
+// Run all agents in parallel
+const results = await Promise.all(
+  agents.map(agent => agent.analyze(sanitizedPayload))
+);
 ```
 
-5. **Document the agent** in `docs/ARCHITECTURE.md`
+5. **Document the agent** in `docs/ARCHITECTURE.md` and `docs/agents/your-agent.md`
 
 ---
 
