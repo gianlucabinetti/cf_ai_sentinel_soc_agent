@@ -505,7 +505,7 @@ Top contributors will be:
 If you discover a security vulnerability in Sentinel AI:
 
 1. **Do NOT open a public GitHub issue**
-2. Email: [security@sentinel-ai.dev] (replace with actual email)
+2. Email: [gbinetti2020@fau.edu] 
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
