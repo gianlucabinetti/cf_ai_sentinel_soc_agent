@@ -4,6 +4,34 @@
 
 Sentinel is a production-grade security triage system deployed on Cloudflare Workers that uses AI to classify and assess potentially malicious payloads at the edge. The system leverages Cloudflare Workflows for durable orchestration, Workers AI (Llama 3.3-70b) for threat analysis, and KV for global caching.
 
+## HAND Architecture (High-performance Agentic Network Defense)
+Sentinel AI v2.5 utilizes the **HAND** model to balance sub-millisecond latency with deep AI analysis.
+
+### 1. The Palm (Hot Cache)
+-   **Component**: `SecurityMemory` (KV).
+-   **Logic**: SHA-256 hash of `Payload + IP`.
+-   **Performance**: <15ms.
+-   **Role**: Instant "Block" or "Allow" for seen traffic. Prevents AI rate-limiting and reduces costs.
+
+### 2. The Finger (Specialized Agents)
+-   **Component**: `BaseAgent`, `SQLiAgent`.
+-   **Logic**: 3-Layer Triage.
+    1.  **Normalization**: Decoding and sanitization.
+    2.  **Heuristics**: Regex scoring (0-100).
+    3.  **AI Verification**: Conditional Llama 3 call (Only for scores 50-85).
+-   **Role**: High-precision threat detection without invoking the full "Brain" unless necessary.
+
+### 3. The Brain (Workflow & Decision)
+-   **Component**: `src/index.ts`, `SentinelWorkflow`.
+-   **Logic**: Orchestrates the pipeline.
+-   **Role**: Makes final Block/Allow decisions and handles state management.
+
+### 4. The Ledger (Forensic Audit)
+-   **Component**: `D1` (SQLite).
+-   **Status**: **ACTIVE**.
+-   **Logic**: Asynchronous logging via `ctx.waitUntil`.
+-   **Schema**: `security_events` table stores full JSON assessments.
+
 **Design Goals:**
 - Sub-millisecond response for known threats (KV cache hits)
 - Durable, retryable AI inference for unknown payloads
@@ -107,6 +135,27 @@ Workflow binding. `class_name` must match the exported class in `src/index.ts`. 
 **Security Considerations:**
 - `compatibility_flags = ["nodejs_compat"]` enables standard crypto APIs (required for SHA-256 hashing)
 - `observability.enabled = true` ensures all requests are logged for audit trails
+
+---
+
+### `src/agents/SQLiAgent.ts`
+
+**Purpose:** Specialized 3-layer detection engine for SQL Injection (v2.5 Deep Scan).
+
+**Architecture Role:**
+1. **Layer 1: Normalization (The Cleaner)**
+   - Recursive URL decoding, hex/unicode conversion, comment stripping.
+   - Ensures consistent payloads for analysis (e.g. `SELECT/**/` -> `SELECT`).
+
+2. **Layer 2: Heuristic Engine (The Filter)**
+   - Regex-based scoring system (0-100).
+   - <10ms latency benchmark.
+   - Blocks or Flags based on score thresholds (>80 Block).
+
+3. **Layer 3: AI Verification (The Judge)**
+   - Invoked ONLY if Heuristic Score > 50.
+   - Uses `env.AI` (Llama 3.3-70b) to reduce false positives.
+   - Output adheres to `SecurityAssessment` interface.
 
 ---
 

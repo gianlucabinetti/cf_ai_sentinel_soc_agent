@@ -27,8 +27,8 @@ The **Fingers** are specialized **Detection Agents** that identify specific atta
 
 **Roadmap (v2.5+):**
 Build specialized Detection Agents as separate modules:
-- **SQLi Agent**: SQL injection detection with pattern matching
-- **XSS Agent**: Cross-site scripting analysis with DOM parsing
+- **SQLi Agent**: `src/agents/SQLiAgent.ts` (ACTIVE - v2.5 Deep Scan)
+- **XSS Agent**: `src/agents/XSSAgent.ts` (Planned)
 - **CSRF Agent**: Cross-site request forgery detection
 - **Path Traversal Agent**: Directory traversal attacks
 - **Command Injection Agent**: OS command injection patterns

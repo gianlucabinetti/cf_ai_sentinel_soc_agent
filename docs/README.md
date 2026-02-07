@@ -54,7 +54,14 @@ Sentinel analyzes potentially malicious payloads (SQL injection, XSS, command in
  **Production-Ready** – Comprehensive error handling, fail-safe defaults, and audit trails  
  **Zero Infrastructure** – No servers to manage, fully serverless on Cloudflare's edge
 
-## Demo
+- **HAND Architecture (High-performance Agentic Network Defense)**:
+  - **The Finger**: specialized `SQLiAgent` (and future agents) triages threats with heuristics.
+  - **The Palm**: Hot Cache (<15ms) prevents redundant AI calls.
+  - **The Brain**: Central workflow for decision making.
+  - **The Ledger**: `D1` SQL auditing for full forensic playback (ACTIVE).
+- **Advanced SQLi Detection (Deep Scan)**:
+  - 3-Layer Defense: Normalization (The Cleaner), Heuristics (The Filter), and AI Verification (The Judge).
+  - Uses `SQLiAgent` to block attacks with high precision.
 
 ### Security Triage Console
 
